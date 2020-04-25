@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     
     //read arguments
     strcpy(fifoname,argv[3]);
-    nsecs=atoi(argv[2])*10e6;
+    nsecs=atoi(argv[2])*1000;
 
     //start counting time
     startTime();
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     while(elapsedTime() < (double) nsecs){
         pthread_create(&threads[thr], NULL, thread_func, fifoname);
         pthread_join(threads[thr],NULL);
-        
+
         thr++;
         sleep(2);
     }
