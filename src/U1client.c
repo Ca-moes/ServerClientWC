@@ -6,10 +6,20 @@
 #include <string.h>
 #include <time.h>
 #include "utils.h"
-#include "operations.h"
+#include "registers.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 100
+
+#define IWANT "IWANT" // cliente faz o pedido inicial
+#define RECVD "RECVD" // servidor acusa receção do pedido
+#define ENTER "ENTER" // servidor diz que aceitou o pedido
+#define IAMIN "IAMIN" // cliente acusa a utilização do Quarto de banho
+#define TIMUP "TIMUP" // servidor diz que terminou o tempo de utilização
+#define TLATE "TLATE" // servidor rejeita pedido por Quarto de banho já ter encerrado (2LATE)
+#define CLOSD "CLOSD" // cliente acusa informação de que o Quarto de banho está fechado
+#define FAILD "FAILD" // cliente já não consegue receber proposta do servidor;
+#define GAVUP "GAVUP" // servidor já não consegue responder a pedido porque FIFO privado do cliente fechou
 
 void * thread_func(){
     /*
@@ -29,10 +39,6 @@ int main(int argc, char* argv[], char *envp[]) {
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
-    operations clientOperations;
-    initOperations(&clientOperations, argv, envp);
-    printOperations(&clientOperations);
-
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
@@ -41,6 +47,14 @@ int main(int argc, char* argv[], char *envp[]) {
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
+
+    printf("argv[0]: %s\n", argv[0]);
+    printf("argv[1]: %s\n", argv[1]);
+    printf("argv[2]: %s\n", argv[2]);
+    printf("argv[3]: %s\n", argv[3]);
+
+    printf("Register format:\n");
+    printRegister(0.5, 23, 132, 135, 20000, 10, IWANT);
 
     //start counting time
     startTime();
