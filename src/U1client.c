@@ -20,7 +20,7 @@ void * thread_func(){
 
     */
 
-   return NULL;
+  return NULL;
 }
 
 int main(int argc, char* argv[], char *envp[]) {
