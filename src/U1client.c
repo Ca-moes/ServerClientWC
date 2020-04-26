@@ -19,7 +19,7 @@ void * thread_func(void *arg){
     char request[BUFSIZE];
     char * fifoname = (char *) arg;
 
-    fd_pub = open(fifoname,0660);
+    fd_pub = open(fifoname,O_WRONLY);
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
 
     int useTime = (rand() % 40) + 1; //random useTime between 1 and 40
