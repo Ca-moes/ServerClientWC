@@ -8,7 +8,7 @@ $(EXEC): $(OBJS)
 	@$(CC) $(CFLAGS) $(OBJS) -o $@ -lm
 
 %.o: %.c %.h $(XHDRS)
-	$(CC) $(CFLAGS) -c $<
+	@$(CC) $(CFLAGS) -c $<
 
 .PHONY : clean
 clean :
