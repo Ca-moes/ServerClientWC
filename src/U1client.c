@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include "utils.h"
+#include "operations.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 100
@@ -22,11 +23,15 @@ void * thread_func(){
    return NULL;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[], char *envp[]) {
     char fifoname[BUFSIZE];
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
+
+    operations clientOperations;
+    initOperations(&clientOperations, argv, envp);
+    printOperations(&clientOperations);
 
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");

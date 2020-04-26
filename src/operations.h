@@ -21,6 +21,8 @@ typedef struct Operation {
     unsigned int GAVUP : 1; // servidor já não consegue responder a pedido porque FIFO privado do cliente fechou
 } operations;
 
-void initOperations(operations *operations, char *envp[]);
+void initOperations(operations *operations, char *argv[], char *envp[]);
+
+void printOperations(operations *operations);
 
 #endif /*OPERATIONS_H*/
