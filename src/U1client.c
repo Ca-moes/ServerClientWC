@@ -11,16 +11,6 @@
 #define BUFSIZE     256
 #define THREADS_MAX 100
 
-#define IWANT "IWANT" // cliente faz o pedido inicial
-#define RECVD "RECVD" // servidor acusa receção do pedido
-#define ENTER "ENTER" // servidor diz que aceitou o pedido
-#define IAMIN "IAMIN" // cliente acusa a utilização do Quarto de banho
-#define TIMUP "TIMUP" // servidor diz que terminou o tempo de utilização
-#define TLATE "TLATE" // servidor rejeita pedido por Quarto de banho já ter encerrado (2LATE)
-#define CLOSD "CLOSD" // cliente acusa informação de que o Quarto de banho está fechado
-#define FAILD "FAILD" // cliente já não consegue receber proposta do servidor;
-#define GAVUP "GAVUP" // servidor já não consegue responder a pedido porque FIFO privado do cliente fechou
-
 void * thread_func(){
     /*
         TODO: 

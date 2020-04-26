@@ -9,12 +9,18 @@
 #include <pthread.h>
 #include "time.h"
 
+#define IWANT "IWANT" // cliente faz o pedido inicial
+#define IAMIN "IAMIN" // cliente acusa a utilização do Quarto de banho
+#define CLOSD "CLOSD" // cliente acusa informação de que o Quarto de banho está fechado
+#define FAILD "FAILD" // cliente já não consegue receber proposta do servidor
+// TODO: restantes colocar no servidor
+
 typedef struct Register {
     double inst; // valor retornado pela chamada ao sistema time(), na altura da produção da linha
     unsigned int i; // o número sequencial do pedido (gerado por Un)
     pid_t pid; // identificador de sistema do processo
                       // (cliente, no caso do pedido; servidor, no caso da resposta)
-    pid_t tid; // identificador no sistema do thread cliente
+    int tid; // identificador no sistema do thread cliente
                       //(cliente, no caso do pedido; servidor, no caso da resposta)
     long double dur; // duração, em milissegundos, de utilização (de um lugar) do Quarto de Banho
                      // (valor atribuído no pedido e repetido na resposta, se se der a ocupação;
@@ -28,6 +34,6 @@ typedef struct Register {
                 // acabou de executar e que variam conforme se trate do cliente ou do servidor:
 } registers;
 
-void printRegister(double inst, int i, pid_t pid, pid_t tid, double long dur, size_t pl, char *oper);
+void printRegister(double inst, int i, pid_t pid, int tid, double long dur, size_t pl, char *oper);
 
 #endif /*REGISTER_H*/
