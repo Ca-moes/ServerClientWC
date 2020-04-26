@@ -36,6 +36,25 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",(long int)pthread_self());
     strcat(privateFifo,temp);
 
+    /*
+    //create private fifo to read message from server
+    if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
+
+    int fd_priv = open(privateFifo, O_RDONLY);
+    if (fd_priv < 0) {perror("Error opening private FIFO: "); exit(1);}
+
+    char receivedMessage[BUFSIZE];
+
+    if(read(fd_priv,&receivedMessage,BUFSIZE)<0){perror("Error reading msg from server: "); exit(1);}
+
+    int num1, pid, place;
+    long int tid;
+    sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d]",&num1, &pid, &tid, &useTime, &place);
+    
+    close(fd_priv);
+    unlink(privateFifo);
+    */
+
    return NULL;
 }
 
