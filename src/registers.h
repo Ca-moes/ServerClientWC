@@ -9,11 +9,15 @@
 #include <pthread.h>
 #include "time.h"
 
-#define IWANT "IWANT" // cliente faz o pedido inicial
-#define IAMIN "IAMIN" // cliente acusa a utilização do Quarto de banho
-#define CLOSD "CLOSD" // cliente acusa informação de que o Quarto de banho está fechado
-#define FAILD "FAILD" // cliente já não consegue receber proposta do servidor
-// TODO: restantes colocar no servidor
+#define IWANT "IWANT" // cliente faz o pedido inicial	
+#define IAMIN "IAMIN" // cliente acusa a utilização do Quarto de banho	
+#define CLOSD "CLOSD" // cliente acusa informação de que o Quarto de banho está fechado	
+#define FAILD "FAILD" // cliente já não consegue receber proposta do servidor;	
+#define RECVD "RECVD" // servidor acusa receção do pedido	
+#define ENTER "ENTER" // servidor diz que aceitou o pedido	
+#define TIMUP "TIMUP" // servidor diz que terminou o tempo de utilização	
+#define TLATE "TLATE" // servidor rejeita pedido por Quarto de banho já ter encerrado (2LATE)	
+#define GAVUP "GAVUP" // servidor já não consegue responder a pedido porque FIFO privado do cliente fechou
 
 typedef struct Register {
     double inst; // valor retornado pela chamada ao sistema time(), na altura da produção da linha
