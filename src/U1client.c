@@ -3,21 +3,38 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
 #include "utils.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 100
 
-void * thread_func(){
-    /*
-        TODO: 
-        criar fifo para comunicacao com server (publico e privado)
-        gerar aleatoriamente parametros (tempo de uso o wc)
-        terminar apos ter sido atendido pelo server
+int i; //global variable 
 
-    */
+void * thread_func(void *arg){
+    int fd_pub;
+    char request[BUFSIZE];
+    char * fifoname = (char *) arg;
+
+    fd_pub = open(fifoname,0660);
+    if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
+
+    int useTime = (rand() % 40) + 1; //random useTime between 1 and 40
+
+    sprintf(request,"[%d, %ld, %ld, %d, -1]", i, (int)getpid(), (long int)pthread_self(), useTime);
+    if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
+    close(fd_pub);
+
+    char privateFifo[BUFSIZE]="/tmp/";
+    char temp[BUFSIZE];
+    sprintf(temp,"%d",(int)getpid());
+    strcat(privateFifo,temp);
+    strcat(privateFifo,".");
+    sprintf(temp,"%ld",(long int)pthread_self());
+    strcat(privateFifo,temp);
 
    return NULL;
 }
@@ -39,6 +56,8 @@ int main(int argc, char* argv[]) {
 
     //start counting time
     startTime();
+
+    srand(time(NULL));
 
     //ciclo de geracao de pedidos
     while(elapsedTime() < (double) nsecs){
