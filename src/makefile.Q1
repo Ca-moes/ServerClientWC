@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -pthread
-OBJS = U1client.o utils.o
+OBJS = Q1server.o utils.o
 XHDRS = utils.h
-EXEC = U1
+EXEC = Q1
 
 $(EXEC): $(OBJS)
 	@$(CC) $(CFLAGS) $(OBJS) -o $@ -lm
