@@ -20,7 +20,7 @@ void * thread_func(void *arg){
     int threadi, pid, dur, place;
     long int tid;
     sscanf(request,"[%d, %d, %ld, %d, %d]",&threadi, &pid, &tid, &dur, &place);
-    //printf("thread received: %s\n",request); //just testing
+    printf("thread received: %s\n",request); //just testing
 
     /*
     TODO:
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
         while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ //loop ate encontrar algo p ler
             sleep(1);
 
-            if (elapsedTime() < (double) nsecs){
+            if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
                 return 0;
