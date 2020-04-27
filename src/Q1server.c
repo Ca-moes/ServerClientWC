@@ -15,32 +15,28 @@
 int i; //global variable 
 
 void * thread_func(void *arg){
-    int fd_pub;
-    char request[BUFSIZE];
-    char * fifoname = (char *) arg;
+    char * request = (char *) arg;
 
-    fd_pub = open(fifoname,0660);
-    if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
+    int threadi, pid, dur, place;
+    long int tid;
+    sscanf(request,"[%d, %d, %ld, %d, %d]",&threadi, &pid, &tid, &dur, &place);
+    //printf("thread received: %s\n",request); //just testing
 
-    int useTime = (rand() % 40) + 1; //random useTime between 1 and 40
-
-    sprintf(request,"[%d, %ld, %ld, %d, -1]", i, (int)getpid(), (long int)pthread_self(), useTime);
-    if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
-    close(fd_pub);
-
-    char privateFifo[BUFSIZE]="/tmp/";
-    char temp[BUFSIZE];
-    sprintf(temp,"%d",(int)getpid());
-    strcat(privateFifo,temp);
-    strcat(privateFifo,".");
-    sprintf(temp,"%ld",(long int)pthread_self());
-    strcat(privateFifo,temp);
+    /*
+    TODO:
+        - esperar que haja lugar disponivel e prosseguir (há sempre - 1 parte)
+            - portanto, percorrer os lugares do wc e se nao houver lugar acrescenta
+        - verificar se da tempo de o cliente usar a wc antes de fechar (se não enviar -1 em dur)
+        - controlar o tempo de utilização (esta thread so termina qnd o cliente acabar de usar)
+        - enviar informacao para o cliente com place atualizado (-1 caso nao de para usar, >1 caso dê)
+    */
 
    return NULL;
 }
 
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];
+    char fifopath[BUFSIZE]="/tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
@@ -53,31 +49,37 @@ int main(int argc, char* argv[]) {
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
+    strcat(fifopath,fifoname);
 
     //create public fifo
-    if(mkfifo(fifoname,0660)<0){perror("Error creating private FIFO:"); exit(1);}
+    if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO:"); exit(1);}
 
     //start counting time
     startTime();
 
-    srand(time(NULL));
+    int fd_pub = open(fifopath,O_RDONLY);
+    if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
 
-    int fd_pub = open(fifoname,O_RDONLY);
-    if (fd_pub==-1){perror("Error opening public FIFO"); exit(1);}
-
-    //ciclo de geracao de pedidos
     char clientRequest[BUFSIZE];
-
     while(elapsedTime() < (double) nsecs){
+        printf("1 elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);
         
-        while(read(fd_pub,&clientRequest,BUFSIZE)>0){
-            pthread_create(&threads[thr], NULL, thread_func, fifoname);
-            pthread_join(threads[thr],NULL);
+        while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ //loop ate encontrar algo p ler
+            sleep(1);
+
+            if (elapsedTime() < (double) nsecs){
+                close(fd_pub);
+                unlink(fifopath);
+                return 0;
+            }
         }
 
+        pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
+        pthread_join(threads[thr],NULL);
         thr++;
-        sleep(2);
     }
 
+    close(fd_pub);
+    unlink(fifopath);
     return 0;
 }

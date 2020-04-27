@@ -18,16 +18,17 @@ int i; //global variable
 void * thread_func(void *arg){
     int fd_pub;
     char request[BUFSIZE];
-    char * fifoname = (char *) arg;
+    char * fifopath = (char *) arg;
 
-    fd_pub = open(fifoname,O_WRONLY);
+    fd_pub = open(fifopath,O_WRONLY);
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
 
     int useTime = (rand() % 40) + 1; //random useTime between 1 and 40
 
-    sprintf(request,"[%d, %ld, %ld, %d, -1]", i, (int)getpid(), (long int)pthread_self(), useTime);
+    sprintf(request,"[%d, %d, %ld, %d, -1]", i, (int)getpid(), (long int)pthread_self(), useTime);
     if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
     close(fd_pub);
+    printf("client writed: %s\n",request);
 
     char privateFifo[BUFSIZE]="/tmp/";
     char temp[BUFSIZE];
@@ -48,9 +49,9 @@ void * thread_func(void *arg){
 
     if(read(fd_priv,&receivedMessage,BUFSIZE)<0){perror("Error reading msg from server: "); exit(1);}
 
-    int num1, pid, place;
+    int threadi, pid, dur, place;
     long int tid;
-    sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d]",&num1, &pid, &tid, &useTime, &place);
+    sscanf(request,"[%d, %d, %ld, %d, %d]",&threadi, &pid, &tid, &dur, &place);
     
     close(fd_priv);
     unlink(privateFifo);
@@ -61,6 +62,7 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[], char *envp[]) {
     char fifoname[BUFSIZE];
+    char fifopath[BUFSIZE]="/tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
@@ -73,14 +75,15 @@ int main(int argc, char* argv[], char *envp[]) {
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
+    strcat(fifopath,fifoname);
 
-    printf("argv[0]: %s\n", argv[0]);
+    /*printf("argv[0]: %s\n", argv[0]);
     printf("argv[1]: %s\n", argv[1]);
     printf("argv[2]: %s\n", argv[2]);
     printf("argv[3]: %s\n", argv[3]);
 
     printf("Register format:\n");
-    printRegister(0.5, 23, 132, 135, 20000, 10, IWANT);
+    printRegister(0.5, 23, 132, 135, 20000, 10, IWANT);*/
 
     //start counting time
     startTime();
@@ -89,9 +92,8 @@ int main(int argc, char* argv[], char *envp[]) {
 
     //ciclo de geracao de pedidos
     while(elapsedTime() < (double) nsecs){
-        pthread_create(&threads[thr], NULL, thread_func, fifoname);
+        pthread_create(&threads[thr], NULL, thread_func, fifopath);
         pthread_join(threads[thr],NULL);
-
         thr++;
         sleep(2);
     }
