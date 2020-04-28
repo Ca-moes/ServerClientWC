@@ -62,24 +62,24 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[], char *envp[]) {
     char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="tmp/";
+    char fifopath[BUFSIZE]="/tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
-    printf("here0\n");
+    printf("Uhere0\n");
 
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
     
-    printf("here1\n");
+    printf("Uhere1\n");
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
     strcat(fifopath,fifoname);
-    printf("here2\n");
+    printf("Uhere2\n");
 
     /*printf("argv[0]: %s\n", argv[0]);
     printf("argv[1]: %s\n", argv[1]);
@@ -90,13 +90,13 @@ int main(int argc, char* argv[], char *envp[]) {
     printRegister(0.5, 23, 132, 135, 20000, 10, IWANT);*/
 
     //start counting time
-    printf("here3\n");
+    printf("Uhere3\n");
     startTime();
-    printf("here4\n");
+    printf("Uhere4\n");
 
     srand(time(NULL));
 
-    printf("here5\n");
+    printf("Uhere5\n");
     //ciclo de geracao de pedidos
     while(elapsedTime() < (double) nsecs){
         printf("Client created thread\n");

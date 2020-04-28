@@ -36,35 +36,34 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="tmp/";
+    char fifopath[BUFSIZE]="/tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
-    printf("here0\n");
+    printf("Qhere0\n");
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
-    printf("here1\n");
+    printf("Qhere1\n");
 
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
     strcat(fifopath,fifoname);
 
-    printf("here2\n");
+    printf("Qhere2\n");
     //create public fifo
     if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
-    printf("here3\n");
-    sleep(5);
+    printf("Qhere3\n");
     //start counting time
     startTime();
-    printf("here4\n");
+    printf("Qhere4\n");
     int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
-    printf("here5\n");
+    printf("Qhere5\n");
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
-    printf("here6\n");
+    printf("Qhere6\n");
     char clientRequest[BUFSIZE];
     while(elapsedTime() < (double) nsecs){
         printf("1 elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);

@@ -9,8 +9,9 @@ cd src
 make -s
 if [ $? -eq 0 ] ; then
   echo "-------------"
-  ./Q1 -t 10 fifoname   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
-  ./U1 -t 2  fifoname    # Un <-t nsecs> fifoname
+  ./Q1 -t 10 fifoname &    # Un <-t nsecs> fifoname
+  ./U1 -t 2  fifoname      # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+
   make clean
 else
   echo "MAKE ERROR";
