@@ -6,18 +6,15 @@ cd src
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 
-make -s
+make -f makefile.U1
 if [ $? -eq 0 ] ; then
-  echo "-------------"
-  ./Q1 -t 10 fifoname &    # Un <-t nsecs> fifoname
-  ./U1 -t 2  fifoname      # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
-
-  make clean
+  ./U1 -t 2 fifoname  $@     # Un <-t nsecs> fifoname
+  rm *.o
+  rm U1
 else
-  echo "MAKE ERROR";
+  echo "U1 MAKE ERROR";
 fi
 
-# make clean
 
 # Flags Possiveis:
 # -t nsecs      - nº (aproximado) de segundos que o programa deve funcionar
