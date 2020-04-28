@@ -3,7 +3,9 @@
 echo "╔══════════════════════════╗"
 echo "║   CHANGE FLAGS IN BASH   ║"
 echo "╚══════════════════════════╝"
-cd src
+cd src/tmp
+rm *.*
+cd ..
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 make -s clean
@@ -16,6 +18,8 @@ if [ $? -eq 0 ] ; then
   wait $P1 $P2
   echo "END OF SERVER/CLIENT"
   make clean
+  cd tmp
+  rm *.*
 else
   echo "MAKE ERROR";
 fi

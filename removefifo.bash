@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /tmp
+cd src/tmp
 rm fifoname
