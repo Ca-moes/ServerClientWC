@@ -7,39 +7,88 @@
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
+#include <limits.h>
 #include "utils.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 100
 
-int i; //global variable 
+#define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
+#define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
+#define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
+
+typedef struct bit{
+    unsigned x:1;
+}bit;
+
+int places[4]; //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
+                //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
+
+bit closed;
+
+int nthreads;
+pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
 
 void * thread_func(void *arg){
+    pthread_mutex_lock(&mut); 
+    nthreads++;
+    pthread_mutex_unlock(&mut); 
     char * request = (char *) arg;
 
     int threadi, pid, dur, place;
     long int tid;
-    sscanf(request,"[%d, %d, %ld, %d, %d]",&threadi, &pid, &tid, &dur, &place);
-    printf("thread received: %s\n",request); //just testing
+    sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
+    printf("-thread received: %s\n",request); //just testing
 
-    /*
-    TODO:
-        - esperar que haja lugar disponivel e prosseguir (há sempre - 1 parte)
-            - portanto, percorrer os lugares do wc e se nao houver lugar acrescenta
-        - verificar se da tempo de o cliente usar a wc antes de fechar (se não enviar -1 em dur)
-        - controlar o tempo de utilização (esta thread so termina qnd o cliente acabar de usar)
-        - enviar informacao para o cliente com place atualizado (-1 caso nao de para usar, >1 caso dê)
-    */
+    char privateFifo[BUFSIZE]="tmp/";
+    char temp[BUFSIZE];
+    sprintf(temp,"%d",pid);
+    strcat(privateFifo,temp);
+    strcat(privateFifo,".");
+    sprintf(temp,"%ld",tid);
+    strcat(privateFifo,temp);
+
+    printf("--Q:openingPrivateFifo %s\n", privateFifo);
+    int fd_priv;
+    do{
+        fd_priv = open(privateFifo, O_WRONLY);
+    }while(fd_priv==-1);
+    /*if (fd_priv < 0) {
+      perror("[Server]Error opening private FIFO"); 
+      exit(1);}*/
+    
+    //mutex lock
+    int tmp=0;
+    while(TestBit(places,tmp)!=0){
+        tmp++;
+    }
+    place=tmp;
+    //mutex unlock
+
+    if(closed.x){
+        place=-1;
+    }
+
+    char sendMessage[BUFSIZE];
+    sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
+
+    write(fd_priv,&sendMessage,BUFSIZE);
+
+    usleep(dur*1000); //espera o tempo de utilizacao do wc
+
+    close(fd_priv);
+    unlink(privateFifo);
 
   return NULL;
 }
 
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="/tmp/";
+    char fifopath[BUFSIZE]="tmp/";
     double nsecs;
-    pthread_t threads[THREADS_MAX];
+    pthread_t tid;
     int thr=0;
+    closed.x=0;
 
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
@@ -59,24 +108,24 @@ int main(int argc, char* argv[]) {
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
     char clientRequest[BUFSIZE];
     while(elapsedTime() < (double) nsecs){
-        printf("1 elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);
+        //printf("--time elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);
         
         while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ //loop ate encontrar algo p ler
-            sleep(1);
 
             if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
-                return 0;
+                pthread_exit((void*)0);
             }
         }
-
-        pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
-        pthread_join(threads[thr],NULL);
+        printf("Server created thread\n");
+        pthread_create(&tid, NULL, thread_func, &clientRequest);
+        //pthread_join(tid,NULL);
         thr++;
     }
-
+    closed.x=1;
     close(fd_pub);
     unlink(fifopath);
-    return 0;
+    printf("SERVER - NTHREAD -> %d", nthreads);
+    pthread_exit((void*)0);
 }
