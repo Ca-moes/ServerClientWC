@@ -31,7 +31,7 @@ void * thread_func(void *arg){
         - enviar informacao para o cliente com place atualizado (-1 caso nao de para usar, >1 caso dê)
     */
 
-   return NULL;
+  return NULL;
 }
 
 int main(int argc, char* argv[]) {
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
     strcat(fifopath,fifoname);
 
     //create public fifo
-    if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO:"); exit(1);}
+    if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
 
     //start counting time
     startTime();

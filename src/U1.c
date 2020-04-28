@@ -90,13 +90,16 @@ int main(int argc, char* argv[], char *envp[]) {
 
     srand(time(NULL));
 
+    printf("here");
     //ciclo de geracao de pedidos
     while(elapsedTime() < (double) nsecs){
+        printf("Client created thread");
         pthread_create(&threads[thr], NULL, thread_func, fifopath);
         pthread_join(threads[thr],NULL);
         thr++;
         sleep(2);
     }
-
+    
+    printf("Client exiting");
     return 0;
 }
