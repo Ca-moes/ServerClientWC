@@ -41,29 +41,22 @@ int main(int argc, char* argv[]) {
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
-    printf("Qhere0\n");
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
-    printf("Qhere1\n");
 
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
     strcat(fifopath,fifoname);
 
-    printf("Qhere2\n");
     //create public fifo
     if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
-    printf("Qhere3\n");
     //start counting time
     startTime();
-    printf("Qhere4\n");
     int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
-    printf("Qhere5\n");
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
-    printf("Qhere6\n");
     char clientRequest[BUFSIZE];
     while(elapsedTime() < (double) nsecs){
         printf("1 elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);

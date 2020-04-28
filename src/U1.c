@@ -67,19 +67,15 @@ int main(int argc, char* argv[], char *envp[]) {
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
-    printf("Uhere0\n");
-
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
     
-    printf("Uhere1\n");
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
     strcat(fifopath,fifoname);
-    printf("Uhere2\n");
 
     /*printf("argv[0]: %s\n", argv[0]);
     printf("argv[1]: %s\n", argv[1]);
@@ -90,13 +86,10 @@ int main(int argc, char* argv[], char *envp[]) {
     printRegister(0.5, 23, 132, 135, 20000, 10, IWANT);*/
 
     //start counting time
-    printf("Uhere3\n");
     startTime();
-    printf("Uhere4\n");
 
     srand(time(NULL));
 
-    printf("Uhere5\n");
     //ciclo de geracao de pedidos
     while(elapsedTime() < (double) nsecs){
         printf("Client created thread\n");
