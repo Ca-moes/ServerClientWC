@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     //start counting time
     startTime();
     printf("here4\n");
-    int fd_pub = open(fifopath,O_RDONLY);
+    int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
     printf("here5\n");
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
     printf("here6\n");
