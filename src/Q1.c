@@ -41,25 +41,29 @@ int main(int argc, char* argv[]) {
     pthread_t threads[THREADS_MAX];
     int thr=0;
 
+    printf("here0\n");
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
-    
+    printf("here1\n");
+
     //read arguments
     strcpy(fifoname,argv[3]);
     nsecs=atoi(argv[2])*1000;
     strcat(fifopath,fifoname);
 
+    printf("here2\n");
     //create public fifo
     if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
-
+    printf("here3\n");
     //start counting time
     startTime();
-
+    printf("here4\n");
     int fd_pub = open(fifopath,O_RDONLY);
+    printf("here5\n");
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
-
+    printf("here6\n");
     char clientRequest[BUFSIZE];
     while(elapsedTime() < (double) nsecs){
         printf("1 elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);
