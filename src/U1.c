@@ -62,7 +62,7 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[], char *envp[]) {
     char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="/tmp/";
+    char fifopath[BUFSIZE]="tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;

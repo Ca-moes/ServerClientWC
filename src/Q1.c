@@ -36,7 +36,7 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="/tmp/";
+    char fifopath[BUFSIZE]="tmp/";
     double nsecs;
     pthread_t threads[THREADS_MAX];
     int thr=0;
@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
     //create public fifo
     if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
     printf("here3\n");
+    sleep(5);
     //start counting time
     startTime();
     printf("here4\n");
