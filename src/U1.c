@@ -114,6 +114,6 @@ int main(int argc, char* argv[], char *envp[]) {
     }
     
     printf("Client exiting\n");
-    printf("-----------------------------------------------------------------------------------------------------------------------------------------------CLIENT - NTHREAD -> %d", nthreads);
+    printf("CLIENT - NTHREAD -> %d\n", nthreads);
     pthread_exit((void*)0);
 }

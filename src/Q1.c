@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
             if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
-                printf("SERVER - NTHREAD -> %d", nthreads);
+                printf("SERVER - NTHREAD -> %d\n", nthreads);
                 pthread_exit((void*)0);
             }
         }
@@ -130,6 +130,6 @@ int main(int argc, char* argv[]) {
     closed.x=1;
     close(fd_pub);
     unlink(fifopath);
-    printf("SERVER - NTHREAD -> %d", nthreads);
+    printf("SERVER - NTHREAD -> %d\n", nthreads);
     pthread_exit((void*)0);
 }
