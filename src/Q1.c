@@ -74,7 +74,7 @@ void * thread_func(void *arg){
     write(fd_priv,&sendMessage,BUFSIZE);
     printf("-server wrote: %s\n",sendMessage);
 
-    //usleep(dur*1000); //espera o tempo de utilizacao do wc
+    usleep(dur*1000); //espera o tempo de utilizacao do wc
 
     close(fd_priv);
     unlink(privateFifo);

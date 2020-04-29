@@ -59,7 +59,9 @@ void * thread_func(void *arg){
 
     char receivedMessage[BUFSIZE];
 
-    if(read(fd_priv,&receivedMessage,BUFSIZE)<0){perror("Error reading msg from server: "); exit(1);}
+    while(read(fd_priv,&receivedMessage,BUFSIZE)<=0){
+        
+    }
     printf("-client received: %s\n",request);
     int threadi, pid, dur, place;
     long int tid;
