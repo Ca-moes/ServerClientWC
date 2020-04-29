@@ -14,15 +14,14 @@
 #define THREADS_MAX 100
 
 int i; //global variable 
-int nthreads;
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
 
 void * thread_func(void *arg){
     pthread_mutex_lock(&mut); 
-    nthreads++;
+    i++;
     pthread_mutex_unlock(&mut);
 
-    printf("Client created thread\n");
+    //printf("Client created thread\n");
     int fd_pub;
     char request[BUFSIZE];
     char * fifopath = (char *) arg;
@@ -31,15 +30,15 @@ void * thread_func(void *arg){
     fd_pub = open(fifopath,O_WRONLY);
     if (fd_pub==-1){perror("Error opening public FIFO: "); pthread_exit((void*)1);}
 
-    int useTime = (rand() % 1000) + 1; //random useTime between 1 and 200
+    int useTime = (rand() % 1000) + 1; //random useTime between 1 and 100
 
-    sprintf(request,"[ %d, %d, %ld, %d, -1 ]", i, (int)getpid(), (long int)pthread_self(), useTime);
+    sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
     
     if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
-    
+    printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
     close(fd_pub);
     
-    printf("-client wrote: %s\n",request);
+    //printf("-client wrote: %s\n",request);
 
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
@@ -49,33 +48,39 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",(long int)pthread_self());
     strcat(privateFifo,temp);
 
-    printf("--U:creatingPrivateFifo %s\n", privateFifo);
+    //printf("--U:creatingPrivateFifo %s\n", privateFifo);
     //create private fifo to read message from server
     if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
 
-    printf("--U:openingPrivateFifo %s\n", privateFifo);
+    //printf("--U:openingPrivateFifo %s\n", privateFifo);
     int fd_priv = open(privateFifo, O_RDONLY);
     if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); exit(1);}
 
     char receivedMessage[BUFSIZE];
 
     while(read(fd_priv,&receivedMessage,BUFSIZE)<=0){
-        
+      
     }
-    printf("-client received: %s\n",request);
+    //printf("-client received: %s\n",request);
     int threadi, pid, dur, place;
     long int tid;
     sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
     
+    if (place >= 0)
+      printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, IAMIN);
+    else
+      printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, CLOSD);
+    
+    
+
     close(fd_priv);
     unlink(privateFifo);
-    printf("client returning.......\n");
+    //printf("client returning.......\n");
 
   return NULL;
 }
 
 int main(int argc, char* argv[], char *envp[]) {
-    nthreads = 0;
     char fifoname[BUFSIZE];
     char fifopath[BUFSIZE]="tmp/";
     double nsecs;
@@ -113,7 +118,6 @@ int main(int argc, char* argv[], char *envp[]) {
         usleep(50*1000);
     }
     
-    printf("Client exiting\n");
-    printf("CLIENT - NTHREAD -> %d\n", nthreads);
+    //printf("Client exiting\n");
     pthread_exit((void*)0);
 }
