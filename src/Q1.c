@@ -71,9 +71,7 @@ void * thread_func(void *arg){
 
     char sendMessage[BUFSIZE];
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
-    pthread_mutex_lock(&mut);
     write(fd_priv,&sendMessage,BUFSIZE);
-    pthread_mutex_unlock(&mut);
     printf("-server wrote: %s\n",sendMessage);
 
     //usleep(dur*1000); //espera o tempo de utilizacao do wc

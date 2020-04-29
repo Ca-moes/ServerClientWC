@@ -11,7 +11,7 @@
 #include "registers.h"
 
 #define BUFSIZE     256
-#define THREADS_MAX 1000
+#define THREADS_MAX 100
 
 int i; //global variable 
 int nthreads;
@@ -21,7 +21,7 @@ void * thread_func(void *arg){
     pthread_mutex_lock(&mut); 
     nthreads++;
     pthread_mutex_unlock(&mut);
-    
+
     printf("Client created thread\n");
     int fd_pub;
     char request[BUFSIZE];
@@ -35,9 +35,7 @@ void * thread_func(void *arg){
 
     sprintf(request,"[ %d, %d, %ld, %d, -1 ]", i, (int)getpid(), (long int)pthread_self(), useTime);
     
-    pthread_mutex_lock(&mut);
     if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
-    pthread_mutex_unlock(&mut); 
     
     close(fd_pub);
     
