@@ -71,11 +71,9 @@ void * thread_func(void *arg){
     if(tmpresult<0) {
       printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, FAILD);
     }
-
     int threadi, pid, dur, place;
     long int tid;
-    sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
-    
+    sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
     if (place >= 0)
       printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, IAMIN);
     else

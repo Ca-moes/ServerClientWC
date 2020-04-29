@@ -70,7 +70,6 @@ void * thread_func(void *arg){
       place=-1;
     }
     char sendMessage[BUFSIZE];
-    printf("Q place to send : %d\n", place);
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
     //printf("-server wrote: %s\n",sendMessage);
