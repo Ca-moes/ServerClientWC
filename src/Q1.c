@@ -27,6 +27,9 @@ bit closed; /**< bit to store if Server is open or closed */
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
 
+    double nsecs;  /**< numbers of seconds the program will be running */
+
+
 void * thread_func(void *arg){
     char * request = (char *) arg; /**< Request string received from public fifo*/
     int threadi, pid, dur, place;  /**< Component of request*/
@@ -61,20 +64,30 @@ void * thread_func(void *arg){
     SetBit(places, place);
     pthread_mutex_unlock(&mut); 
 
-    // always some place available
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
+    // sending message with place to private fifo
+    char sendMessage[BUFSIZE];
+
+    if (elapsedTime() + dur <= nsecs) {
+        // always some place available
+        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
+        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
+    }
+
+    else {
+        closed.x=1;
+        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
+        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, -1, TLATE);
+    }
 
     // checking if server is closed
     if(closed.x){place=-1;}
-
-    // sending message with place to private fifo
-    char sendMessage[BUFSIZE];
-    sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
+
+    
 
     // wait using time
     usleep(dur*1000); 
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
+    if (!closed.x) printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
     
     // cleanup
     ClearBit(places, place);
@@ -87,7 +100,6 @@ int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];  /**< public fifo file name */
     char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
     char clientRequest[BUFSIZE];  /**< string read from public fifo */
-    double nsecs;  /**< numbers of seconds the program will be running */
     pthread_t threads[THREADS_MAX];  /**< array to store thread id's */
     int thr=0;  /**< index for thread id / nº od threads created */
     closed.x=0;  /**< 1-server closed | 0-server open */
