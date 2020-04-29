@@ -13,6 +13,12 @@
 #define BUFSIZE     256
 #define THREADS_MAX 100
 
+// Limit Values for Random user usage times
+#define UPPERB 100
+#define LOWERB 1
+// Interval betweeen User Requests (miliseconds)
+#define INTMS 50
+
 int i; //global variable 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
 
@@ -26,7 +32,7 @@ void * thread_func(void *arg){
     char request[BUFSIZE];
     char * fifopath = (char *) arg;
 
-    int useTime = (rand() % 1000) + 1; //random useTime between 1 and 100
+    int useTime = (rand() % (UPPERB - LOWERB + 1)) + LOWERB;  //random useTime between 1 and 100
 
     fd_pub = open(fifopath,O_WRONLY);
     if (fd_pub==-1){
@@ -62,15 +68,14 @@ void * thread_func(void *arg){
 
     char receivedMessage[BUFSIZE];
 
-    while(read(fd_priv,&receivedMessage,BUFSIZE)<=0){
-
+    while(read(fd_priv,&receivedMessage,BUFSIZE)==0){
+      // lê de fifo privado continuamente
     }
 
-    if(read(fd_priv,&receivedMessage,BUFSIZE)<=0) {
+    if(read(fd_priv,&receivedMessage,BUFSIZE)<0) {
       printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, FAILD);
     }
 
-    //printf("-client received: %s\n",request);
     int threadi, pid, dur, place;
     long int tid;
     sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
@@ -124,7 +129,7 @@ int main(int argc, char* argv[], char *envp[]) {
         pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
         pthread_detach(threads[thr]);
         thr++;
-        usleep(50*1000);
+        usleep(INTMS*1000);
     }
     
     //printf("Client exiting\n");
