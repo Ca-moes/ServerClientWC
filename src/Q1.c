@@ -77,6 +77,10 @@ void * thread_func(void *arg){
         closed.x=1;
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, -1, TLATE);
+        printf("elapsedTime(): %f\n", elapsedTime());
+        printf("dur: %d\n", dur);
+        printf("sum: %f\n", elapsedTime() + dur);
+        printf("nsecs: %f\n", nsecs);
     }
 
     // checking if server is closed
