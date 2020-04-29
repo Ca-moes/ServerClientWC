@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "utils.h"
+#include "registers.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 1000
@@ -23,22 +24,20 @@ typedef struct bit{
 
 int places[4]; //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
                 //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
-
 bit closed;
 
 int nthreads;
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
 
+
 void * thread_func(void *arg){
-    pthread_mutex_lock(&mut); 
-    nthreads++;
-    pthread_mutex_unlock(&mut); 
     char * request = (char *) arg;
 
     int threadi, pid, dur, place;
-    long int tid;
-    sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
-    printf("-server received: %s\n",request); //just testing
+
+    long tid;
+    sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
+    printRegister(elapsedTime(), threadi, getpid(), tid, dur, -1, RECVD);
 
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
@@ -48,37 +47,40 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",tid);
     strcat(privateFifo,temp);
 
-    printf("--Q:openingPrivateFifo %s\n", privateFifo);
     int fd_priv;
     do{
         fd_priv = open(privateFifo, O_WRONLY);
     }while(fd_priv==-1);
     if (fd_priv < 0) {
-      perror("[Server]Error opening private FIFO"); 
-      exit(1);}
+        //perror("[Server]Error opening private FIFO"); 
+        printRegister(elapsedTime(), threadi, pid, tid, dur, place, GAVUP);
+        pthread_exit((void *)1);
+    }
     
-    //mutex lock
     int tmp=0;
-    while(TestBit(places,tmp)!=0){
-        tmp++;
+    pthread_mutex_lock(&mut); 
+    while(TestBit(places,tmp)){
+      tmp++;
     }
     place=tmp;
-    //mutex unlock
+    SetBit(places, place);
+    pthread_mutex_unlock(&mut); 
 
     if(closed.x){
-        place=-1;
+      place=-1;
     }
-
     char sendMessage[BUFSIZE];
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
-    printf("-server wrote: %s\n",sendMessage);
+    //printf("-server wrote: %s\n",sendMessage);
 
     usleep(dur*1000); //espera o tempo de utilizacao do wc
+    printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TIMUP);
+    ClearBit(places, place);
 
     close(fd_priv);
     unlink(privateFifo);
-    printf("server thread returning.......\n");
+    //printf("server thread returning.......\n");
 
   return NULL;
 }
@@ -90,7 +92,9 @@ int main(int argc, char* argv[]) {
     pthread_t threads[THREADS_MAX];
     int thr=0;
     closed.x=0;
-
+    for (int i = 0; i < 4; i++)
+      places[i] = 0;
+    
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
@@ -118,11 +122,10 @@ int main(int argc, char* argv[]) {
             if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
-                printf("SERVER - NTHREAD -> %d\n", nthreads);
                 pthread_exit((void*)0);
             }
         }
-        printf("Server created thread\n");
+        //printf("Server created thread\n");
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
         pthread_detach(threads[thr]);
         thr++;
@@ -130,6 +133,5 @@ int main(int argc, char* argv[]) {
     closed.x=1;
     close(fd_pub);
     unlink(fifopath);
-    printf("SERVER - NTHREAD -> %d\n", nthreads);
     pthread_exit((void*)0);
 }

@@ -1,6 +1,6 @@
 #include "registers.h"
 
-void printRegister(double inst, int i, pid_t pid, int tid, double long dur, size_t pl, char *oper) {
-    printf("%f ; %u ; %u ; %u ; %Lf ; %lu ; %s\n", inst, i, pid, tid, dur, pl, oper);
+void printRegister(double inst, int i, pid_t pid, long tid, int dur, int pl, char *oper) {
+    printf("%f ; %u ; %d ; %lu ; %d ; %d ; %s\n", inst, i, pid, tid, dur, pl, oper);
     fflush(stdout);
 }
