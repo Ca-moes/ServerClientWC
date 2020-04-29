@@ -26,15 +26,19 @@ void * thread_func(void *arg){
     char request[BUFSIZE];
     char * fifopath = (char *) arg;
 
-    //printf("|Client opening public fifo : %s aaaa\n", fifopath);
-    fd_pub = open(fifopath,O_WRONLY);
-    if (fd_pub==-1){perror("Error opening public FIFO: "); pthread_exit((void*)1);}
-
     int useTime = (rand() % 1000) + 1; //random useTime between 1 and 100
+
+    fd_pub = open(fifopath,O_WRONLY);
+    if (fd_pub==-1){
+        //error("Error opening public FIFO: ");
+        printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
+        pthread_exit((void*)1);
+    }
 
     sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
     
     if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
+
     printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
     close(fd_pub);
     
@@ -59,8 +63,13 @@ void * thread_func(void *arg){
     char receivedMessage[BUFSIZE];
 
     while(read(fd_priv,&receivedMessage,BUFSIZE)<=0){
-      
+
     }
+
+    if(read(fd_priv,&receivedMessage,BUFSIZE)<=0) {
+      printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, FAILD);
+    }
+
     //printf("-client received: %s\n",request);
     int threadi, pid, dur, place;
     long int tid;

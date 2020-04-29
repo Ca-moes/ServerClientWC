@@ -35,6 +35,7 @@ void * thread_func(void *arg){
     char * request = (char *) arg;
 
     int threadi, pid, dur, place;
+
     long tid;
     sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
     printRegister(elapsedTime(), threadi, getpid(), tid, dur, -1, RECVD);
@@ -52,8 +53,10 @@ void * thread_func(void *arg){
         fd_priv = open(privateFifo, O_WRONLY);
     }while(fd_priv==-1);
     if (fd_priv < 0) {
-      perror("[Server]Error opening private FIFO"); 
-      exit(1);}
+        //perror("[Server]Error opening private FIFO"); 
+        printRegister(elapsedTime(), threadi, pid, tid, dur, place, GAVUP);
+        pthread_exit((void *)1);
+    }
     
     pthread_mutex_lock(&mut); 
     int tmp=0;
@@ -66,22 +69,18 @@ void * thread_func(void *arg){
 
     if(closed.x){
         place=-1;
-        printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TLATE);
     }
-    else
-        printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, ENTER);
-    
     char sendMessage[BUFSIZE];
+    printf("place : %d\n", place);
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
-    sleep(1);
     write(fd_priv,&sendMessage,BUFSIZE);
     //printf("-server wrote: %s\n",sendMessage);
 
     usleep(dur*1000); //espera o tempo de utilizacao do wc
 
     ClearBit(places, place);
-
     printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TIMUP);
+
 
     close(fd_priv);
     unlink(privateFifo);
