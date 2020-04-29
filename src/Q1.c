@@ -66,13 +66,14 @@ void * thread_func(void *arg){
     SetBit(places, place);
     pthread_mutex_unlock(&mut); 
 
+    printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, ENTER);
+
     if(closed.x){
       place=-1;
     }
     char sendMessage[BUFSIZE];
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
-    //printf("-server wrote: %s\n",sendMessage);
 
     usleep(dur*1000); //espera o tempo de utilizacao do wc
     printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TIMUP);
@@ -80,9 +81,7 @@ void * thread_func(void *arg){
 
     close(fd_priv);
     unlink(privateFifo);
-    //printf("server thread returning.......\n");
-
-  return NULL;
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]) {

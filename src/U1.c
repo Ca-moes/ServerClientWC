@@ -79,13 +79,11 @@ void * thread_func(void *arg){
     else
       printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, CLOSD);
     
-    
-
     close(fd_priv);
     unlink(privateFifo);
-    //printf("client returning.......\n");
 
-  return NULL;
+    pthread_exit(NULL);
+
 }
 
 int main(int argc, char* argv[], char *envp[]) {

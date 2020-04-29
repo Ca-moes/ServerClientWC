@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "╔══════════════════════════╗"
-echo "║   CHANGE FLAGS IN BASH   ║"
+echo "║       RUNNING TESTS      ║"
 echo "╚══════════════════════════╝"
 cd src/tmp
 rm * &
@@ -9,12 +9,18 @@ cd ..
 # $? = 2 otherwise
 make -s
 if [ $? -eq 0 ] ; then
-  ./Q1 -t 2 fifoname &    # Un <-t nsecs> fifoname
+  ./Q1 -t 10 door > q1.log 2> q1.err &  # Un <-t nsecs> fifoname
   P1=$!
-  ./U1 -t 3 fifoname &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+  ./U1 -t 5 door > u1.log 2> u1.err &   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
   wait $P1 $P2
   echo "END OF SERVER/CLIENT"
+
+  n2LATE=`grep 2LATE q1.log | wc -l`
+  echo $n2LATE
+  nCLOSD=`grep CLOSD u1.log | wc -l`
+  echo $nCLOSD
+
   make clean
 else
   echo "MAKE ERROR";
