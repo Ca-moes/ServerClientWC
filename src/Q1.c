@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "utils.h"
+#include "registers.h"
 
 #define BUFSIZE     256
 #define THREADS_MAX 1000
@@ -38,7 +39,8 @@ void * thread_func(void *arg){
     int threadi, pid, dur, place;
     long int tid;
     sscanf(request,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
-    printf("-server received: %s\n",request); //just testing
+    //printf("-server received: %s\n",request); //just testing
+    printRegister(elapsedTime(), threadi, pid, tid, dur, place, RECVD);
 
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
@@ -48,14 +50,16 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",tid);
     strcat(privateFifo,temp);
 
-    printf("--Q:openingPrivateFifo %s\n", privateFifo);
+    //printf("--Q:openingPrivateFifo %s\n", privateFifo);
     int fd_priv;
     do{
         fd_priv = open(privateFifo, O_WRONLY);
     }while(fd_priv==-1);
     if (fd_priv < 0) {
-      perror("[Server]Error opening private FIFO"); 
-      exit(1);}
+        //perror("[Server]Error opening private FIFO"); 
+        printRegister(elapsedTime(), threadi, pid, tid, dur, place, GAVUP);
+        exit(1);
+    }
     
     //mutex lock
     int tmp=0;
@@ -67,18 +71,21 @@ void * thread_func(void *arg){
 
     if(closed.x){
         place=-1;
+        printRegister(elapsedTime(), threadi, pid, tid, dur, place, TLATE);
     }
 
     char sendMessage[BUFSIZE];
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
-    printf("-server wrote: %s\n",sendMessage);
+    //printf("-server wrote: %s\n",sendMessage);
 
     usleep(dur*1000); //espera o tempo de utilizacao do wc
 
+    if (!closed.x) printRegister(elapsedTime(), threadi, pid, tid, dur, place, TIMUP);
+
     close(fd_priv);
     unlink(privateFifo);
-    printf("server thread returning.......\n");
+    //printf("server thread returning.......\n");
 
   return NULL;
 }
@@ -122,7 +129,7 @@ int main(int argc, char* argv[]) {
                 pthread_exit((void*)0);
             }
         }
-        printf("Server created thread\n");
+        //printf("Server created thread\n");
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
         pthread_detach(threads[thr]);
         thr++;
@@ -130,6 +137,6 @@ int main(int argc, char* argv[]) {
     closed.x=1;
     close(fd_pub);
     unlink(fifopath);
-    printf("SERVER - NTHREAD -> %d\n", nthreads);
+    //printf("SERVER - NTHREAD -> %d\n", nthreads);
     pthread_exit((void*)0);
 }
