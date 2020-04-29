@@ -14,7 +14,7 @@
 #define THREADS_MAX 100
 
 // Limit Values for Random user usage times
-#define UPPERB 100
+#define UPPERB 1000
 #define LOWERB 1
 // Interval betweeen User Requests (miliseconds)
 #define INTMS 50
@@ -36,7 +36,6 @@ void * thread_func(void *arg){
 
     fd_pub = open(fifopath,O_WRONLY);
     if (fd_pub==-1){
-        //error("Error opening public FIFO: ");
         printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
         pthread_exit((void*)1);
     }
@@ -48,8 +47,6 @@ void * thread_func(void *arg){
     printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
     close(fd_pub);
     
-    //printf("-client wrote: %s\n",request);
-
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
     sprintf(temp,"%d",(int)getpid());
@@ -58,21 +55,20 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",(long int)pthread_self());
     strcat(privateFifo,temp);
 
-    //printf("--U:creatingPrivateFifo %s\n", privateFifo);
     //create private fifo to read message from server
     if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
 
-    //printf("--U:openingPrivateFifo %s\n", privateFifo);
     int fd_priv = open(privateFifo, O_RDONLY);
     if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); exit(1);}
 
     char receivedMessage[BUFSIZE];
+    int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
 
-    while(read(fd_priv,&receivedMessage,BUFSIZE)==0){
-      // lê de fifo privado continuamente
+    while(tmpresult<=0){
+      // lê de fifo privado continuamente enquanto não há info
+      tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
     }
-
-    if(read(fd_priv,&receivedMessage,BUFSIZE)<0) {
+    if(tmpresult<0) {
       printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, FAILD);
     }
 

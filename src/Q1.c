@@ -28,7 +28,6 @@ bit closed;
 
 int nthreads;
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
-pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; 
 
 
 void * thread_func(void *arg){
@@ -58,9 +57,9 @@ void * thread_func(void *arg){
         pthread_exit((void *)1);
     }
     
-    pthread_mutex_lock(&mut); 
     int tmp=0;
-    while(TestBit(places,tmp)>0){
+    pthread_mutex_lock(&mut); 
+    while(TestBit(places,tmp)){
       tmp++;
     }
     place=tmp;
@@ -68,18 +67,17 @@ void * thread_func(void *arg){
     pthread_mutex_unlock(&mut); 
 
     if(closed.x){
-        place=-1;
+      place=-1;
     }
     char sendMessage[BUFSIZE];
+    printf("Q place to send : %d\n", place);
     sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
     write(fd_priv,&sendMessage,BUFSIZE);
     //printf("-server wrote: %s\n",sendMessage);
 
     usleep(dur*1000); //espera o tempo de utilizacao do wc
-
-    ClearBit(places, place);
     printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TIMUP);
-
+    ClearBit(places, place);
 
     close(fd_priv);
     unlink(privateFifo);
