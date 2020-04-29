@@ -1,5 +1,4 @@
 #!/bin/bash
-./removefifo.bash
 echo "╔══════════════════════════╗"
 echo "║   CHANGE FLAGS IN BASH   ║"
 echo "╚══════════════════════════╝"
