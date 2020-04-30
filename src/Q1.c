@@ -74,7 +74,9 @@ void * thread_func(void *arg){
     }
 
     else {
+        pthread_mutex_lock(&mut2);   // necessário criar outro mutex
         closed.x=1;
+        pthread_mutex_unlock(&mut2);  
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
         printf("elapsedTime(): %f\n", elapsedTime());
