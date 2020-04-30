@@ -93,7 +93,7 @@ void * thread_func(void *arg){
 
     // wait using time
     usleep(dur*1000); 
-    if (!closed.x) printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
+    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
     
     // cleanup
     ClearBit(places, place);
