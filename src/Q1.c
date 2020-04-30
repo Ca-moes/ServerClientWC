@@ -26,9 +26,9 @@ int places[4];  /**< array of bits to store used places */
 bit closed; /**< bit to store if Server is open or closed */
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
+pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**< mutex to enable closed bit */
 
-    double nsecs;  /**< numbers of seconds the program will be running */
-
+double nsecs;  /**< numbers of seconds the program will be running */
 
 void * thread_func(void *arg){
     char * request = (char *) arg; /**< Request string received from public fifo*/
