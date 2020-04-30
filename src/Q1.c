@@ -67,7 +67,7 @@ void * thread_func(void *arg){
     // sending message with place to private fifo
     char sendMessage[BUFSIZE];
 
-    if (elapsedTime() + dur <= nsecs) {
+    if (elapsedTime() <= nsecs) {
         // always some place available
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
