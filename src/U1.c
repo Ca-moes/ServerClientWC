@@ -21,8 +21,9 @@
 
 //global variables
 int i;  /**< número sequencial do pedido */
-pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
+bit serverOpen;
 
+pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
 
 /**
  * Thread Function that creates requests
@@ -43,6 +44,7 @@ void * thread_func(void *arg){
   if (fd_pub==-1){
     // In case there's an error, the Server is Offline (Closed)
     printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
+    serverOpen.x = 0;
     pthread_exit(NULL);
   }
 
@@ -83,8 +85,9 @@ void * thread_func(void *arg){
   // check if there's a place available or the server is closed
   if (place >= 0)
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, IAMIN);
-  else
+  else{
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, CLOSD);
+  }
   
   // cleanup
   close(fd_priv);
@@ -98,6 +101,7 @@ int main(int argc, char* argv[], char *envp[]) {
   double nsecs;  /**< numbers of seconds the program will be running */
   pthread_t threads[THREADS_MAX];  /**< array to store thread id's */
   int thr=0; /**< index for thread id / nº od threads created */
+  serverOpen.x = 1;
 
   //check arguments
   if (argc!=4) {
@@ -114,12 +118,11 @@ int main(int argc, char* argv[], char *envp[]) {
   srand(time(NULL));
 
   //ciclo de geracao de pedidos
-  while(elapsedTime() < (double) nsecs){
+  while(serverOpen.x == 1 && elapsedTime() < (double) nsecs){
     pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
     pthread_detach(threads[thr]);
     thr++;
     usleep(INTMS*1000);
   }
-  
   pthread_exit((void*)0);
 }
