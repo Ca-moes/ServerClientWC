@@ -54,7 +54,7 @@ void * thread_func(void *arg){
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
   if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: ");close(fd_pub); pthread_exit(NULL);}
-  printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
+  printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, IWANT);
   close(fd_pub);
   
   // Making of pathname of private fifo 
