@@ -19,6 +19,8 @@
 // Interval betweeen User Requests (miliseconds)
 #define INTMS 50
 
+#define MSATTEMPT 200     /**< nº of milisec to waste attempting to open private fifo*/
+
 //global variables
 int i;  /**< número sequencial do pedido */
 bit serverOpen;
@@ -39,13 +41,20 @@ void * thread_func(void *arg){
   int useTime = (rand() % (UPPERB - LOWERB + 1)) + LOWERB; /**< Determine the use time for this client */
 
   // opening Public fifo to be able to write
-  fd_pub = open(fifopath,O_WRONLY);
-  if (fd_pub==-1){
+  float startt = elapsedTime();
+  do{
+    fd_pub = open(fifopath,O_WRONLY);
+  } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
+  if (fd_pub < 0 || elapsedTime() - startt >= MSATTEMPT) {
+    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Public Fifo");
+    pthread_exit(NULL);
+  }
+  /* if (fd_pub==-1){
     // In case there's an error, the Server is Offline (Closed)
     printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
     serverOpen.x = 0;
     pthread_exit(NULL);
-  }
+  } */
 
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
@@ -66,18 +75,26 @@ void * thread_func(void *arg){
   if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); pthread_exit(NULL);;}
 
   // Opening private fifo to read the response
-  int fd_priv = open(privateFifo, O_RDONLY);
-  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); pthread_exit(NULL);;}
+  int fd_priv;
+  startt = elapsedTime();
+  do{
+    fd_priv = open(privateFifo, O_RDONLY);
+  } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
+  if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT) {
+    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Private Fifo");
+    pthread_exit(NULL);
+    }
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
+
   // Attempts to read from private fifo until there's a response
   while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
   if(tmpresult<0) {printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, FAILD);}
 
   // If there's a response, parse the response to different variables
-  int threadi, pid, dur, place;
+  int threadi, pid, dur, place = 0;
   long int tid;
   sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
 
