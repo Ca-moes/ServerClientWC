@@ -124,5 +124,5 @@ int main(int argc, char* argv[], char *envp[]) {
     thr++;
     usleep(INTMS*1000);
   }
-  pthread_exit((void*)0);
+  return 0;
 }
