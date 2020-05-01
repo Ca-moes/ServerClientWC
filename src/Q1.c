@@ -11,8 +11,8 @@
 #include "utils.h"
 #include "registers.h"
 
-#define BUFSIZE     256
-#define THREADS_MAX 1000
+#define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
+#define THREADS_MAX 1000   /**< max number of threads */
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
@@ -27,7 +27,7 @@ bit closed; /**< bit to store if Server is open or closed */
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
 
-    double nsecs;  /**< numbers of seconds the program will be running */
+double nsecs;  /**< numbers of seconds the program will be running */
 
 
 void * thread_func(void *arg){
@@ -49,7 +49,7 @@ void * thread_func(void *arg){
     strcat(privateFifo,temp);
 
     // open private fifo
-    int fd_priv;
+    int fd_priv; /**< private fifo file descriptor */
     do{fd_priv = open(privateFifo, O_WRONLY);}while(fd_priv==-1);
     if (fd_priv < 0) {
         printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
@@ -65,14 +65,13 @@ void * thread_func(void *arg){
     pthread_mutex_unlock(&mut); 
 
     // sending message with place to private fifo
-    char sendMessage[BUFSIZE];
+    char sendMessage[BUFSIZE];  /**< string with message to send */
 
     if (elapsedTime() + dur <= nsecs) {
         // always some place available
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
-
     else {
         closed.x=1;
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
@@ -86,8 +85,6 @@ void * thread_func(void *arg){
     // checking if server is closed
     if(closed.x){place=-1;}
     write(fd_priv,&sendMessage,BUFSIZE);
-
-    
 
     // wait using time
     usleep(dur*1000); 
