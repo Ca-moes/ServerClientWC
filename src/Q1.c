@@ -26,9 +26,9 @@ int places[4];  /**< array of bits to store used places */
 bit closed; /**< bit to store if Server is open or closed */
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
+pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**< mutex to enable closed bit */
 
 double nsecs;  /**< numbers of seconds the program will be running */
-
 
 void * thread_func(void *arg){
     char * request = (char *) arg; /**< Request string received from public fifo*/
@@ -67,13 +67,15 @@ void * thread_func(void *arg){
     // sending message with place to private fifo
     char sendMessage[BUFSIZE];  /**< string with message to send */
 
-    if (elapsedTime() + dur <= nsecs) {
+    if (elapsedTime() <= nsecs) {
         // always some place available
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
     else {
+        pthread_mutex_lock(&mut2);   // necessário criar outro mutex
         closed.x=1;
+        pthread_mutex_unlock(&mut2);  
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
         printf("elapsedTime(): %f\n", elapsedTime());
@@ -88,7 +90,7 @@ void * thread_func(void *arg){
 
     // wait using time
     usleep(dur*1000); 
-    if (!closed.x) printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
+    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
     
     // cleanup
     ClearBit(places, place);

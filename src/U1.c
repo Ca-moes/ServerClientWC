@@ -72,7 +72,7 @@ void * thread_func(void *arg){
   char receivedMessage[BUFSIZE];
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
   // Attempts to read from private fifo until there's a response
-  while(tmpresult<=0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
+  while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
   if(tmpresult<0) {printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, FAILD);}
 
   // If there's a response, parse the response to different variables
