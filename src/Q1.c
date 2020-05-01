@@ -14,8 +14,7 @@
 #define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
 #define THREADS_MAX 1000   /**< max number of threads */
 
-#define TRIES 3            /**< number of tries to open private fifo */
-#define MSBETWEENTRIES 10  /**< number of ms between each attempt */
+#define MSATTEMPT 500 /**< nº of milisec to waste attempting to open private fifo*/
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
@@ -51,18 +50,14 @@ void * thread_func(void *arg){
 
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
-    bit atemptedonce; atemptedonce.x = 0;
-    int tries = 0;
-    do{
-      if (atemptedonce.x == 1){
-        usleep(MSBETWEENTRIES*1000);
-        tries++;
-      }
-      fd_priv = open(privateFifo, O_WRONLY);
-      atemptedonce.x = 1;
-    }while(fd_priv==-1 && tries < TRIES);
-    if (fd_priv < 0 || tries >= TRIES) {
-        printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
+    float startt = elapsedTime();
+    do
+    {
+        fd_priv = open(privateFifo, O_WRONLY);
+    } while (fd_priv == -1 && elapsedTime() - startt < MSATTEMPT);
+    if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT)
+    {
+        fprintf(stderr, "%f.%s\n", elapsedTime(), "Server - Error Opening Private Fifo");
         pthread_exit((void *)1);
     }
     
@@ -148,9 +143,23 @@ int main(int argc, char* argv[]) {
         pthread_detach(threads[thr]);
         thr++;
     }
+    closed.x = 1;
+    float starttime;
+    int readreturn;
+
+  
+    starttime = elapsedTime();
+    do{
+        readreturn = read(fd_pub, &clientRequest, BUFSIZE);
+    } while (readreturn == 0 && elapsedTime() - starttime < MSATTEMPT);
+    if (readreturn > 0)
+    {
+        pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
+        pthread_detach(threads[thr]);
+        thr++;
+    }
     
     // cleanup
-    closed.x=1;
     close(fd_pub);
     unlink(fifopath);
     pthread_exit((void*)0);

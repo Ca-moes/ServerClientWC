@@ -19,6 +19,8 @@
 // Interval betweeen User Requests (miliseconds)
 #define INTMS 50
 
+#define MSATTEMPT 500 /**< nº of milisec to waste attempting to open public fifo*/
+
 //global variables
 int i;  /**< número sequencial do pedido */
 bit serverOpen;
@@ -40,13 +42,12 @@ void * thread_func(void *arg){
   int useTime = (rand() % (UPPERB - LOWERB + 1)) + LOWERB; /**< Determine the use time for this client */
 
   // opening Public fifo to be able to write
-  fd_pub = open(fifopath,O_WRONLY);
-  if (fd_pub==-1){
-    // In case there's an error, the Server is Offline (Closed)
-    printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
-    pthread_mutex_lock(&mut);
-    serverOpen.x = 0;
-    pthread_mutex_unlock(&mut);
+  float startt = elapsedTime();
+  do{     
+    fd_pub = open(fifopath,O_WRONLY);
+  } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
+  if (fd_pub < 0 || elapsedTime() - startt >= MSATTEMPT) {
+    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Public Fifo");
     pthread_exit(NULL);
   }
 
