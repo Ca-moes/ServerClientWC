@@ -19,22 +19,22 @@
 // Interval betweeen User Requests (miliseconds)
 #define INTMS 50
 
-#define MSATTEMPT 500 /**< nº of milisec to waste attempting to open public fifo*/
+#define MSATTEMPT 750 /**< nº of milisec to waste attempting to open public fifo*/
 
 //global variables
 int i;  /**< número sequencial do pedido */
 bit serverOpen;
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
+pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER;
 /**
  * Thread Function that creates requests
  */
 void * thread_func(void *arg){
-  pthread_detach(pthread_self());
   // updating i with mutex's
-  pthread_mutex_lock(&mut); 
+  pthread_mutex_lock(&mut2); 
   i++;
-  pthread_mutex_unlock(&mut);
+  pthread_mutex_unlock(&mut2);
 
   int fd_pub; /**< file descriptor of public fifo */
   char request[BUFSIZE]; /**< Request string to send to public fifo*/
@@ -53,7 +53,7 @@ void * thread_func(void *arg){
 
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
-  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); pthread_exit(NULL);}
+  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: ");close(fd_pub); pthread_exit(NULL);}
   printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
   close(fd_pub);
   
@@ -75,8 +75,9 @@ void * thread_func(void *arg){
   do{
     fd_priv = open(privateFifo, O_RDONLY);
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
-  if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT) {
+  if (fd_priv < 0) {
     fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Private Fifo");
+    close(fd_priv);
     pthread_exit(NULL);
   }
 
@@ -86,7 +87,7 @@ void * thread_func(void *arg){
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
   // Attempts to read from private fifo until there's a response
   while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
-  if(tmpresult<0) {printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, FAILD);}
+  if(tmpresult<0) {printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);}
 
   // If there's a response, parse the response to different variables
   int threadi, pid, dur, place;
@@ -95,14 +96,13 @@ void * thread_func(void *arg){
 
   // check if there's a place available or the server is closed
   if (place >= 0)
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, IAMIN);
+    printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, IAMIN);
   else{
     pthread_mutex_lock(&mut);
     serverOpen.x = 0;
     pthread_mutex_unlock(&mut);
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, CLOSD);
+    printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, CLOSD);
   }
-  
   // cleanup
   close(fd_priv);
   unlink(privateFifo);
@@ -134,13 +134,13 @@ int main(int argc, char* argv[], char *envp[]) {
   //ciclo de geracao de pedidos
   while(elapsedTime() < (double) nsecs){
     pthread_mutex_lock(&mut);
-    if (serverOpen.x != 1) {
+    if (serverOpen.x == 0) {
       pthread_mutex_unlock(&mut);
       break;
     }
     pthread_mutex_unlock(&mut);
     pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
-    
+    pthread_detach(threads[thr]);
     thr++;
   
     usleep(INTMS*1000);

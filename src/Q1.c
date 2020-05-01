@@ -14,7 +14,7 @@
 #define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
 #define THREADS_MAX 1000   /**< max number of threads */
 
-#define MSATTEMPT 500 /**< nº of milisec to waste attempting to open private fifo*/
+#define MSATTEMPT 750 /**< nº of milisec to waste attempting to open private fifo*/
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
@@ -37,7 +37,7 @@ void * thread_func(void *arg){
 
     // parse contents received from public fifo
     sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, -1, RECVD);
+    printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, -1, RECVD);
 
     // make private fifo pathname
     char privateFifo[BUFSIZE]="tmp/";
@@ -71,35 +71,36 @@ void * thread_func(void *arg){
 
     // sending message with place to private fifo
     char sendMessage[BUFSIZE];  /**< string with message to send */
-
-    if (elapsedTime() <= nsecs) {
-        // always some place available
-        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
-        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
-    }
-    else {
-        pthread_mutex_lock(&mut2);   
-        closed.x=1;
-        pthread_mutex_unlock(&mut2);  
-        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
-        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
-        pthread_exit((void *)1);
-    }
-
+    
     // checking if server is closed
-    if(closed.x){place=-1;}
-
+    pthread_mutex_lock(&mut2); 
+    if(closed.x){
+        pthread_mutex_unlock(&mut2); 
+        place=-1;
+        printRegister(time(NULL), threadi, getpid(), pthread_self(), -1, -1, TLATE);
+    }
+    else{
+        pthread_mutex_unlock(&mut2); 
+        printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
+    }
+    sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
 
     // write to private fifo
 
     if(write(fd_priv,&sendMessage,BUFSIZE) == -1){
-      printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
+      printRegister(time(NULL), threadi, pid, pthread_self(), dur, place, GAVUP);
       pthread_exit((void *)1);
+    }
+
+    if(closed.x){ //nao espera o tempo de uso
+        ClearBit(places, place);
+        close(fd_priv);
+        pthread_exit(NULL);
     }
 
     // wait using time
     usleep(dur*1000); 
-    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
+    printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TIMUP);
     
     // cleanup
     ClearBit(places, place);
@@ -151,11 +152,13 @@ int main(int argc, char* argv[]) {
         pthread_detach(threads[thr]);
         thr++;
     }
+    pthread_mutex_lock(&mut2); 
     closed.x = 1;
+    pthread_mutex_unlock(&mut2); 
     float starttime;
     int readreturn;
 
-  
+  do{
     starttime = elapsedTime();
     do{
         readreturn = read(fd_pub, &clientRequest, BUFSIZE);
@@ -166,7 +169,7 @@ int main(int argc, char* argv[]) {
         pthread_detach(threads[thr]);
         thr++;
     }
-    
+  }while(elapsedTime() - starttime < MSATTEMPT);
     // cleanup
     close(fd_pub);
     unlink(fifopath);
