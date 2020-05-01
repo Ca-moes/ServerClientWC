@@ -57,7 +57,7 @@ void * thread_func(void *arg){
     } while (fd_priv == -1 && elapsedTime() - startt < MSATTEMPT);
     if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT)
     {
-        fprintf(stderr, "%f.%s\n", elapsedTime(), "Server - Error Opening Private Fifo");
+        fprintf(stderr, "%d-%s\n", threadi, "Server - Error Opening Private Fifo");
         pthread_exit((void *)1);
     }
     
@@ -89,7 +89,9 @@ void * thread_func(void *arg){
     // checking if server is closed
     if(closed.x){place=-1;}
 
+
     // write to private fifo
+
     if(write(fd_priv,&sendMessage,BUFSIZE) == -1){
       printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
       pthread_exit((void *)1);
