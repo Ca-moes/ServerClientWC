@@ -11,34 +11,35 @@
 #include "utils.h"
 #include "registers.h"
 
-#define BUFSIZE     256
-#define THREADS_MAX 1000
+#define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
+#define THREADS_MAX 1000   /**< max number of threads */
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
-typedef struct bit{
-    unsigned x:1;
-}bit;
+typedef struct bit {unsigned x:1;} bit; /**< bit Data Type */
 
-int places[4]; //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
-                //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
-bit closed;
+int places[4];  /**< array of bits to store used places */
+//com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
+//ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
+bit closed; /**< bit to store if Server is open or closed */
 
-int nthreads;
-pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
+pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**< mutex to enable closed bit */
 
+double nsecs;  /**< numbers of seconds the program will be running */
 
 void * thread_func(void *arg){
-    char * request = (char *) arg;
+    char * request = (char *) arg; /**< Request string received from public fifo*/
+    int threadi, pid, dur, place;  /**< Component of request*/
+    long tid;  /**< thread id of client */
 
-    int threadi, pid, dur, place;
-
-    long tid;
+    // parse contents received from public fifo
     sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
-    printRegister(elapsedTime(), threadi, getpid(), tid, dur, -1, RECVD);
+    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, -1, RECVD);
 
+    // make private fifo pathname
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
     sprintf(temp,"%d",pid);
@@ -47,54 +48,70 @@ void * thread_func(void *arg){
     sprintf(temp,"%ld",tid);
     strcat(privateFifo,temp);
 
-    int fd_priv;
-    do{
-        fd_priv = open(privateFifo, O_WRONLY);
-    }while(fd_priv==-1);
+    // open private fifo
+    int fd_priv; /**< private fifo file descriptor */
+    do{fd_priv = open(privateFifo, O_WRONLY);}while(fd_priv==-1);
     if (fd_priv < 0) {
-        //perror("[Server]Error opening private FIFO"); 
-        printRegister(elapsedTime(), threadi, pid, tid, dur, place, GAVUP);
+        printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
         pthread_exit((void *)1);
     }
     
+    // Finding available place
     int tmp=0;
     pthread_mutex_lock(&mut); 
-    while(TestBit(places,tmp)){
-      tmp++;
-    }
+    while(TestBit(places,tmp)){tmp++;}
     place=tmp;
     SetBit(places, place);
     pthread_mutex_unlock(&mut); 
 
-    if(closed.x){
-      place=-1;
+    // sending message with place to private fifo
+    char sendMessage[BUFSIZE];  /**< string with message to send */
+
+    if (elapsedTime() <= nsecs) {
+        // always some place available
+        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
+        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
-    char sendMessage[BUFSIZE];
-    sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, pid, tid, dur, place);
+    else {
+        pthread_mutex_lock(&mut2);   // necessário criar outro mutex
+        closed.x=1;
+        pthread_mutex_unlock(&mut2);  
+        sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
+        printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
+        printf("elapsedTime(): %f\n", elapsedTime());
+        printf("dur: %d\n", dur);
+        printf("sum: %f\n", elapsedTime() + dur);
+        printf("nsecs: %f\n", nsecs);
+    }
+
+    // checking if server is closed
+    if(closed.x){place=-1;}
     write(fd_priv,&sendMessage,BUFSIZE);
-    //printf("-server wrote: %s\n",sendMessage);
 
-    usleep(dur*1000); //espera o tempo de utilizacao do wc
-    printRegister(elapsedTime(), threadi, getpid(), tid, dur, place, TIMUP);
+    // wait using time
+    usleep(dur*1000); 
+    printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, TIMUP);
+    
+    // cleanup
     ClearBit(places, place);
-
     close(fd_priv);
     unlink(privateFifo);
-    //printf("server thread returning.......\n");
-
-  return NULL;
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]) {
-    char fifoname[BUFSIZE];
-    char fifopath[BUFSIZE]="tmp/";
-    double nsecs;
-    pthread_t threads[THREADS_MAX];
-    int thr=0;
-    closed.x=0;
+    char fifoname[BUFSIZE];  /**< public fifo file name */
+    char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
+    char clientRequest[BUFSIZE];  /**< string read from public fifo */
+    pthread_t threads[THREADS_MAX];  /**< array to store thread id's */
+    int thr=0;  /**< index for thread id / nº od threads created */
+    closed.x=0;  /**< 1-server closed | 0-server open */
+
+    // initialize available places at 0
     for (int i = 0; i < 4; i++)
       places[i] = 0;
     
+    // check arguments
     if (argc!=4) {
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
@@ -111,25 +128,27 @@ int main(int argc, char* argv[]) {
     //start counting time
     startTime();
     
+    // open public fifo
     int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
     
-    char clientRequest[BUFSIZE];
-    while(elapsedTime() < (double) nsecs){
-        //printf("--time elapsed: %f nsecs: %f\n",elapsedTime(),nsecs);
-        
-        while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ //loop ate encontrar algo p ler
+    // while loop to check running time
+    while(elapsedTime() < (double) nsecs){        
+        // while loop to check public fifo
+        while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
             if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
                 pthread_exit((void*)0);
             }
         }
-        //printf("Server created thread\n");
+        // create thread with contents of public fifo
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
         pthread_detach(threads[thr]);
         thr++;
     }
+
+    // cleanup
     closed.x=1;
     close(fd_pub);
     unlink(fifopath);
