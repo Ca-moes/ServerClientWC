@@ -24,7 +24,6 @@ int i;  /**< número sequencial do pedido */
 bit serverOpen;
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
-
 /**
  * Thread Function that creates requests
  */
@@ -86,6 +85,7 @@ void * thread_func(void *arg){
   if (place >= 0)
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, IAMIN);
   else{
+    serverOpen.x = 0;
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, CLOSD);
   }
   

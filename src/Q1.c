@@ -71,15 +71,11 @@ void * thread_func(void *arg){
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
     else {
-        pthread_mutex_lock(&mut2);   // necessário criar outro mutex
+        pthread_mutex_lock(&mut2);   
         closed.x=1;
         pthread_mutex_unlock(&mut2);  
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
-        printf("elapsedTime(): %f\n", elapsedTime());
-        printf("dur: %d\n", dur);
-        printf("sum: %f\n", elapsedTime() + dur);
-        printf("nsecs: %f\n", nsecs);
     }
 
     // checking if server is closed
@@ -134,11 +130,11 @@ int main(int argc, char* argv[]) {
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
         while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
-            if (elapsedTime() > (double) nsecs){
+            /* if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
                 pthread_exit((void*)0);
-            }
+            } */
         }
         // create thread with contents of public fifo
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
