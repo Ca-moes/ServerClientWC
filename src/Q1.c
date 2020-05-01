@@ -14,6 +14,9 @@
 #define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
 #define THREADS_MAX 1000   /**< max number of threads */
 
+#define TRIES 3            /**< number of tries to open private fifo */
+#define MSBETWEENTRIES 10  /**< number of ms between each attempt */
+
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
@@ -48,8 +51,17 @@ void * thread_func(void *arg){
 
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
-    do{fd_priv = open(privateFifo, O_WRONLY);}while(fd_priv==-1);
-    if (fd_priv < 0) {
+    bit atemptedonce; atemptedonce.x = 0;
+    int tries = 0;
+    do{
+      if (atemptedonce.x == 1){
+        usleep(MSBETWEENTRIES*1000);
+        tries++;
+      }
+      fd_priv = open(privateFifo, O_WRONLY);
+      atemptedonce.x = 1;
+    }while(fd_priv==-1 && tries < TRIES);
+    if (fd_priv < 0 || tries >= TRIES) {
         printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
         pthread_exit((void *)1);
     }
@@ -130,11 +142,11 @@ int main(int argc, char* argv[]) {
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
         while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
-            /* if (elapsedTime() > (double) nsecs){
+            if (elapsedTime() > (double) nsecs +1){
                 close(fd_pub);
                 unlink(fifopath);
                 pthread_exit((void*)0);
-            } */
+            } 
         }
         // create thread with contents of public fifo
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
