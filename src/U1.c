@@ -11,15 +11,15 @@
 #include "registers.h"
 
 #define BUFSIZE     256
-#define THREADS_MAX 512
+//#define THREADS_MAX 2000
 
 // Limit Values for Random user usage times
 #define UPPERB 1000
 #define LOWERB 1
 // Interval betweeen User Requests (miliseconds)
-#define INTMS 50
+#define INTMS 30
 
-#define MSATTEMPT 750 /**< nº of milisec to waste attempting to open public fifo*/
+#define MSATTEMPT 500 /**< nº of milisec to waste attempting to open public fifo*/
 
 //global variables
 int i;  /**< número sequencial do pedido */
@@ -46,14 +46,20 @@ void * thread_func(void *arg){
   do{     
     fd_pub = open(fifopath,O_WRONLY);
   } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
-  if (fd_pub < 0 || elapsedTime() - startt >= MSATTEMPT) {
+  if (fd_pub < 0) {
     fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
     pthread_exit(NULL);
   }
 
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
-  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: ");close(fd_pub); pthread_exit(NULL);}
+  
+  if (write(fd_pub, &request, BUFSIZE)<0){
+      perror("Error writing request: ");
+      close(fd_pub); 
+      pthread_exit(NULL);
+  }
+
   printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, IWANT);
   close(fd_pub);
   
@@ -67,7 +73,7 @@ void * thread_func(void *arg){
   strcat(privateFifo,temp);
 
   //Create private fifo to read message from server
-  if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); pthread_exit(NULL);;}
+  if(mkfifo(privateFifo,0660)==-1){perror("Error creating private FIFO:"); pthread_exit(NULL);}
 
   // Opening private fifo to read the response
   int fd_priv;
@@ -75,16 +81,17 @@ void * thread_func(void *arg){
   do{
     fd_priv = open(privateFifo, O_RDONLY);
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
+  
   if (fd_priv < 0) {
-    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Private Fifo");
+    fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo");
     close(fd_priv);
     pthread_exit(NULL);
   }
 
-
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
+
   // Attempts to read from private fifo until there's a response
   while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
   if(tmpresult<0) {printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);}
@@ -103,9 +110,12 @@ void * thread_func(void *arg){
     pthread_mutex_unlock(&mut);
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, CLOSD);
   }
+
   // cleanup
   close(fd_priv);
-  unlink(privateFifo);
+  if (unlink(privateFifo)<0){
+    perror("Error destroying private fifo:");
+  }
   pthread_exit(0);
 }
 
@@ -113,8 +123,7 @@ int main(int argc, char* argv[], char *envp[]) {
   char fifoname[BUFSIZE];   /**< public fifo file name */
   char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
   double nsecs;  /**< numbers of seconds the program will be running */
-  pthread_t threads[THREADS_MAX];  /**< array to store thread id's */
-  int thr=0; /**< index for thread id / nº od threads created */
+  pthread_t tid;  /**< array to store thread id's */
   serverOpen.x = 1;
 
   //check arguments
@@ -139,9 +148,8 @@ int main(int argc, char* argv[], char *envp[]) {
       break;
     }
     pthread_mutex_unlock(&mut);
-    pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
-    pthread_detach(threads[thr]);
-    thr++;
+    pthread_create(&tid,NULL, thread_func, (void *)fifopath);
+    pthread_join(tid,NULL);
   
     usleep(INTMS*1000);
   }
