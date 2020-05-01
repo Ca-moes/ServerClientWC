@@ -21,9 +21,9 @@
 
 //global variables
 int i;  /**< número sequencial do pedido */
+bit serverOpen;
+
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
-
-
 /**
  * Thread Function that creates requests
  */
@@ -43,12 +43,13 @@ void * thread_func(void *arg){
   if (fd_pub==-1){
     // In case there's an error, the Server is Offline (Closed)
     printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
+    serverOpen.x = 0;
     pthread_exit(NULL);
   }
 
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
-  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
+  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); pthread_exit(NULL);}
   printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
   close(fd_pub);
   
@@ -62,11 +63,11 @@ void * thread_func(void *arg){
   strcat(privateFifo,temp);
 
   //Create private fifo to read message from server
-  if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
+  if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); pthread_exit(NULL);;}
 
   // Opening private fifo to read the response
   int fd_priv = open(privateFifo, O_RDONLY);
-  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); exit(1);}
+  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); pthread_exit(NULL);;}
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
@@ -83,8 +84,10 @@ void * thread_func(void *arg){
   // check if there's a place available or the server is closed
   if (place >= 0)
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, IAMIN);
-  else
+  else{
+    serverOpen.x = 0;
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, CLOSD);
+  }
   
   // cleanup
   close(fd_priv);
@@ -98,6 +101,7 @@ int main(int argc, char* argv[], char *envp[]) {
   double nsecs;  /**< numbers of seconds the program will be running */
   pthread_t threads[THREADS_MAX];  /**< array to store thread id's */
   int thr=0; /**< index for thread id / nº od threads created */
+  serverOpen.x = 1;
 
   //check arguments
   if (argc!=4) {
@@ -114,12 +118,11 @@ int main(int argc, char* argv[], char *envp[]) {
   srand(time(NULL));
 
   //ciclo de geracao de pedidos
-  while(elapsedTime() < (double) nsecs){
+  while(serverOpen.x == 1 && elapsedTime() < (double) nsecs){
     pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
     pthread_detach(threads[thr]);
     thr++;
     usleep(INTMS*1000);
   }
-  
   pthread_exit((void*)0);
 }
