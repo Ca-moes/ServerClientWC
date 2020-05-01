@@ -57,7 +57,7 @@ void * thread_func(void *arg){
     } while (fd_priv == -1 && elapsedTime() - startt < MSATTEMPT);
     if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT)
     {
-        fprintf(stderr, "%f.%s\n", elapsedTime(), "Server - Error Opening Private Fifo");
+        fprintf(stderr, "%d-%s\n", threadi, "Server - Error Opening Private Fifo");
         pthread_exit((void *)1);
     }
     

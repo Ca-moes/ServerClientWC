@@ -47,7 +47,7 @@ void * thread_func(void *arg){
     fd_pub = open(fifopath,O_WRONLY);
   } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
   if (fd_pub < 0 || elapsedTime() - startt >= MSATTEMPT) {
-    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Public Fifo");
+    fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
     pthread_exit(NULL);
   }
 
