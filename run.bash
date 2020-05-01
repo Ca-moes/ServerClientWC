@@ -21,7 +21,7 @@ if [ $? -eq 0 ] ; then
 else
   echo "MAKE ERROR";
 fi
-
+# lele
 # make clean
 # Flags Possiveis:
 # -t nsecs      - nº (aproximado) de segundos que o programa deve funcionar
