@@ -11,7 +11,7 @@
 #include "registers.h"
 
 #define BUFSIZE     256
-#define THREADS_MAX 100
+#define THREADS_MAX 512
 
 // Limit Values for Random user usage times
 #define UPPERB 1000
@@ -28,6 +28,7 @@ pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
  * Thread Function that creates requests
  */
 void * thread_func(void *arg){
+  pthread_detach(pthread_self());
   // updating i with mutex's
   pthread_mutex_lock(&mut); 
   i++;
@@ -43,7 +44,9 @@ void * thread_func(void *arg){
   if (fd_pub==-1){
     // In case there's an error, the Server is Offline (Closed)
     printRegister(elapsedTime(), i, (int)getpid(), (long int)pthread_self(), useTime, -1, CLOSD);
+    pthread_mutex_lock(&mut);
     serverOpen.x = 0;
+    pthread_mutex_unlock(&mut);
     pthread_exit(NULL);
   }
 
@@ -85,14 +88,16 @@ void * thread_func(void *arg){
   if (place >= 0)
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, IAMIN);
   else{
+    pthread_mutex_lock(&mut);
     serverOpen.x = 0;
+    pthread_mutex_unlock(&mut);
     printRegister(elapsedTime(), threadi, getpid(), pthread_self(), dur, place, CLOSD);
   }
   
   // cleanup
   close(fd_priv);
   unlink(privateFifo);
-  pthread_exit(NULL);
+  pthread_exit(0);
 }
 
 int main(int argc, char* argv[], char *envp[]) {
@@ -118,11 +123,18 @@ int main(int argc, char* argv[], char *envp[]) {
   srand(time(NULL));
 
   //ciclo de geracao de pedidos
-  while(serverOpen.x == 1 && elapsedTime() < (double) nsecs){
+  while(elapsedTime() < (double) nsecs){
+    pthread_mutex_lock(&mut);
+    if (serverOpen.x != 1) {
+      pthread_mutex_unlock(&mut);
+      break;
+    }
+    pthread_mutex_unlock(&mut);
     pthread_create(&threads[thr],NULL, thread_func, (void *)fifopath);
-    pthread_detach(threads[thr]);
+    
     thr++;
+  
     usleep(INTMS*1000);
   }
-  pthread_exit((void*)0);
+  pthread_exit(0);
 }

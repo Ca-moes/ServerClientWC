@@ -107,7 +107,6 @@ void * thread_func(void *arg){
     // cleanup
     ClearBit(places, place);
     close(fd_priv);
-    unlink(privateFifo);
     pthread_exit(NULL);
 }
 
@@ -147,19 +146,15 @@ int main(int argc, char* argv[]) {
     // while loop to check running time
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
-        while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
-            if (elapsedTime() > (double) nsecs +1){
-                close(fd_pub);
-                unlink(fifopath);
-                pthread_exit((void*)0);
-            } 
+        if(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
+            continue;
         }
         // create thread with contents of public fifo
         pthread_create(&threads[thr], NULL, thread_func, &clientRequest);
         pthread_detach(threads[thr]);
         thr++;
     }
-
+    
     // cleanup
     closed.x=1;
     close(fd_pub);
