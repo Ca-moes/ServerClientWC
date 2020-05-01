@@ -18,8 +18,6 @@
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
-typedef struct bit {unsigned x:1;} bit; /**< bit Data Type */
-
 int places[4];  /**< array of bits to store used places */
 //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
 //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4

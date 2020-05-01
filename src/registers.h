@@ -38,6 +38,8 @@ typedef struct Register {
                 // acabou de executar e que variam conforme se trate do cliente ou do servidor:
 } registers;
 
+typedef struct bit {unsigned x:1;} bit; /**< bit Data Type */
+
 void printRegister(double inst, int i, pid_t pid, long tid,  int dur, int pl, char *oper);
 
 #endif /*REGISTER_H*/
