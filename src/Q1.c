@@ -88,11 +88,17 @@ void * thread_func(void *arg){
         pthread_mutex_unlock(&mut2);  
         sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), -1, -1);
         printRegister(elapsedTime(), threadi, getpid(), pthread_self(), -1, -1, TLATE);
+        pthread_exit((void *)1);
     }
 
     // checking if server is closed
     if(closed.x){place=-1;}
-    write(fd_priv,&sendMessage,BUFSIZE);
+
+    // write to private fifo
+    if(write(fd_priv,&sendMessage,BUFSIZE) == -1){
+      printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
+      pthread_exit((void *)1);
+    }
 
     // wait using time
     usleep(dur*1000); 
