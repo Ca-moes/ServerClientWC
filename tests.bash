@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Adapted from André Daniel Gomes's Test script
+## Stolen from https://github.com/skdGT/feup-sope
 
 echo "╔══════════════════════════╗"
 echo "║       RUNNING TESTS      ║"
