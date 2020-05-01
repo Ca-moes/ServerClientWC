@@ -62,7 +62,7 @@ void * thread_func(void *arg){
       atemptedonce.x = 1;
     }while(fd_priv==-1 && tries < TRIES);
     if (fd_priv < 0 || tries >= TRIES) {
-        printRegister(elapsedTime(), threadi, pid, pthread_self(), dur, place, GAVUP);
+        fprintf(stderr, "%s", "Error Opening Private Fifo\n");
         pthread_exit((void *)1);
     }
     
