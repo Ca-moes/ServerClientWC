@@ -14,7 +14,7 @@
 #define BUFSIZE     256    /**< nº of bytes written and read between fifos*/
 #define THREADS_MAX 1000   /**< max number of threads */
 
-#define TRIES 3            /**< number of tries to open private fifo */
+#define TRIES 5            /**< number of tries to open private fifo */
 #define MSBETWEENTRIES 10  /**< number of ms between each attempt */
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
         while(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
-            if (elapsedTime() > (double) nsecs +1){
+            if (elapsedTime() > (double) nsecs){
                 close(fd_pub);
                 unlink(fifopath);
                 pthread_exit((void*)0);

@@ -11,7 +11,7 @@ make -s
 if [ $? -eq 0 ] ; then
   ./Q1 -t 10 door > q1.log 2> q1.err &  # Un <-t nsecs> fifoname
   P1=$!
-  ./U1 -t 5 door > u1.log 2> u1.err &   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+  ./U1 -t 12 door > u1.log 2> u1.err &   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
   wait $P1 $P2
   echo "END OF SERVER/CLIENT"
