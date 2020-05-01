@@ -2,9 +2,11 @@
 echo "╔══════════════════════════╗"
 echo "║   CHANGE FLAGS IN BASH   ║"
 echo "╚══════════════════════════╝"
+
 cd src/tmp
-rm * &
+# rm *.* &
 cd ..
+
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 make -s

@@ -52,7 +52,7 @@ void * thread_func(void *arg){
 
   // Making of message to send, writing of message and closing of fifo
   sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
-  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); exit(1);}
+  if (write(fd_pub, &request, BUFSIZE)<0){perror("Error writing request: "); pthread_exit(NULL);}
   printRegister(elapsedTime(), i, getpid(), pthread_self(), useTime, -1, IWANT);
   close(fd_pub);
   
@@ -66,11 +66,11 @@ void * thread_func(void *arg){
   strcat(privateFifo,temp);
 
   //Create private fifo to read message from server
-  if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
+  if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); pthread_exit(NULL);;}
 
   // Opening private fifo to read the response
   int fd_priv = open(privateFifo, O_RDONLY);
-  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); exit(1);}
+  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); pthread_exit(NULL);;}
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
