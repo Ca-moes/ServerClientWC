@@ -70,8 +70,15 @@ void * thread_func(void *arg){
   if(mkfifo(privateFifo,0660)<0){perror("Error creating private FIFO:"); exit(1);}
 
   // Opening private fifo to read the response
-  int fd_priv = open(privateFifo, O_RDONLY);
-  if (fd_priv < 0) {perror("[Client]Error opening private FIFO: "); exit(1);}
+  int fd_priv;
+  startt = elapsedTime();
+  do{
+    fd_priv = open(privateFifo, O_RDONLY);
+  } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
+  if (fd_priv < 0 || elapsedTime() - startt >= MSATTEMPT) {
+    fprintf(stderr, "%f.%s\n", elapsedTime(), "Client - Error Opening Private Fifo");
+    pthread_exit(NULL);
+  }
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
