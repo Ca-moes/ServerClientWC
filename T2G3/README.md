@@ -24,6 +24,8 @@ Ambos os programas U1 e Q1 são multithreaded e funcionam com o máximo de paral
   - Manda uma mensagem pelo fifo privado com a informação relativa ao **pl**,
   - Executa um *usleep()* com o tempo de uso para no fim notificar com **TIMUP**,
   - Faz o *cleanup* final e fecha o fifo privado
+- Quando o tempo de execução do programa excede o tempo fornecido a partir dos argumentos, é feito em _main()_ uma leitura do fifo público para notificar os pedidos pendentes que o servidor se encontra fechado.
+- É feito um _cleanup_ antes de sair da thread principal.
 
 Para guardar os lugares ocupados é apenas necessário saber a posição do lugar e se está ocupado ou não. Tendo como objetivo poupar o uso de memória, implementamos a partir de um array de inteiros, um array de bits, com cada bit a corresponder a um lugar. Caso esse bit esteja a 1, o lugar encontra-se ocupado. Isto foi realizado usando [este link](http://www.mathcs.emory.edu/~cheung/Courses/255/Syllabus/1-C-intro/bit-array.html) como fonte e com o auxilio das seguintes macros (Sendo **A** o array de *int*s e **k** a posição no array de bits):
 ```c
