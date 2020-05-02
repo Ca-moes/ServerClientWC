@@ -253,6 +253,3 @@ Failed requests: 0
 Gave up requests: 0
 <font color="#8AE234"><b>[PASSED] </b></font>2LATE - too late requests: 1
 <font color="#8AE234"><b>[PASSED] </b></font>ENTER - accepted requests: 1397</pre>
-
-----
-Como nota final, todas as funções requeridas para a primeira parte estão implementadas e testadas.
