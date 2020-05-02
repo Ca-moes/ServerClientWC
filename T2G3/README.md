@@ -6,11 +6,11 @@ Ambos os programas U1 e Q1 são multithreaded e funcionam com o máximo de paral
 - Após esta leitura os pedidos são gerados a partir de threads lançadas continuamente
 - Em cada thread:
   - São gerados os valores de **i** e **dur**, 
-  - É aberto o canal de comunicação para o servidor 
-  - É escrita a mensagem no fifo público e com isto o fifo público é fechado
-  - É criado e aberto o fifo privado com o nome na forma _"pid.tid"_ em _/tmp_
-  - É lida a mensagem do fifo privado
-  - Verifica se o servidor está fechado (para parar de criar novos pedidos) ou se têm um lugar disponivel
+  - É aberto o canal de comunicação para o servidor,
+  - É escrita a mensagem no fifo público e com isto o fifo público é fechado,
+  - É criado e aberto o fifo privado com o nome na forma _"pid.tid"_ em _/tmp_,
+  - É lida a mensagem do fifo privado,
+  - Verifica se o servidor está fechado (para parar de criar novos pedidos) ou se têm um lugar disponivel,
   - Fecha o fifo privado, elimina-o e faz o _clean up_ final antes de sair da thread 
 - No fim do tempo de execução é feito um cleanup em _main()_
 
@@ -19,10 +19,10 @@ Ambos os programas U1 e Q1 são multithreaded e funcionam com o máximo de paral
 - É criado o fifo público e aberto do lado do servidor sem **O_NONBLOCK**
 - É lançada uma nova thread por cada pedido recebido a partir do fifo público
 - Em cada thread:
-  - É aberto o fifo privado a partir das informações recebidas no fifo público
-  - É feita uma pesquisa para descobrir um lugar livre
-  - Manda uma mensagem pelo fifo privado com a informação relativa ao **pl**
-  - Executa um *usleep()* com o tempo de uso para no fim notificar com **TIMUP** 
+  - É aberto o fifo privado a partir das informações recebidas no fifo público,
+  - É feita uma pesquisa para descobrir um lugar livre,
+  - Manda uma mensagem pelo fifo privado com a informação relativa ao **pl**,
+  - Executa um *usleep()* com o tempo de uso para no fim notificar com **TIMUP**,
   - Faz o *cleanup* final e fecha o fifo privado
 
 Para guardar os lugares ocupados é apenas necessário saber a posição do lugar e se está ocupado ou não. Tendo como objetivo poupar o uso de memória, implementamos a partir de um array de inteiros, um array de bits, com cada bit a corresponder a um lugar. Caso esse bit esteja a 1, o lugar encontra-se ocupado. Isto foi realizado usando [este link](http://www.mathcs.emory.edu/~cheung/Courses/255/Syllabus/1-C-intro/bit-array.html) como fonte e com o auxilio das seguintes macros (Sendo **A** o array de *int*s e **k** a posição no array de bits):
