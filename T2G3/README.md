@@ -10,7 +10,7 @@ Ambos os programas U1 e Q1 são multithreaded e funcionam com o máximo de paral
   - É escrita a mensagem no fifo público e com isto o fifo público é fechado,
   - É criado e aberto o fifo privado com o nome na forma _"pid.tid"_ em _/tmp_,
   - É lida a mensagem do fifo privado,
-  - Verifica se o servidor está fechado (para parar de criar novos pedidos) ou se têm um lugar disponivel,
+  - Verifica se o servidor está fechado (para parar de criar novos pedidos) ou se têm um lugar disponivel, caso o servidor esteja fechado é mandado para o **STDOUT** a flag **CLOSD** e uma variável global **serverOpen** muda de valor para notificar o ciclo de criação de pedidos em _main()_ para parar.
   - Fecha o fifo privado, elimina-o e faz o _clean up_ final antes de sair da thread 
 - No fim do tempo de execução é feito um cleanup em _main()_
 
