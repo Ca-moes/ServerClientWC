@@ -17,7 +17,7 @@
 #define UPPERB 1000
 #define LOWERB 1
 // Interval betweeen User Requests (miliseconds)
-#define INTMS 30
+#define INTMS 50
 
 #define MSATTEMPT 500 /**< nº of milisec to waste attempting to open public fifo*/
 
@@ -148,7 +148,7 @@ int main(int argc, char* argv[], char *envp[]) {
     }
     if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
     if(pthread_create(&tid,NULL, thread_func, (void *)fifopath)!=0){perror("Client-pthread_Create");}
-    if(pthread_join(tid,NULL)!= 0){perror("Client-pthread_join");}
+    if(pthread_detach(tid)!= 0){perror("Client-pthread_join");}
   
     if(usleep(INTMS*1000) == -1){perror("Client-usleep");}
   }
