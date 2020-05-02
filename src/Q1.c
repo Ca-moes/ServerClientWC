@@ -20,9 +20,9 @@
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
-int places[4];  /**< array of bits to store used places */
 //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
 //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
+int places[4];  /**< array of bits to store used places */
 bit closed; /**< bit to store if Server is open or closed */
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
@@ -36,16 +36,16 @@ void * thread_func(void *arg){
     long tid;  /**< thread id of client */
 
     // parse contents received from public fifo
-    sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
+    if(sscanf(request,"[ %d, %d, %lu, %d, %d ]",&threadi, &pid, &tid, &dur, &place)==EOF){perror("Server-sscanf");}
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, -1, RECVD);
 
     // make private fifo pathname
     char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
-    sprintf(temp,"%d",pid);
+    if(sprintf(temp,"%d",pid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
     strcat(privateFifo,".");
-    sprintf(temp,"%ld",tid);
+    if(sprintf(temp,"%ld",tid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
 
     // open private fifo
@@ -54,7 +54,7 @@ void * thread_func(void *arg){
     do{
         fd_priv = open(privateFifo, O_WRONLY);
     } while (fd_priv == -1 && elapsedTime() - startt < MSATTEMPT);
-   
+  
     if (fd_priv < 0){
         fprintf(stderr, "%d-%s\n", threadi, "Server - Error Opening Private Fifo");
         if(close(fd_priv)==-1) {perror("Error closing fifo:");}
@@ -63,27 +63,27 @@ void * thread_func(void *arg){
     
     // Finding available place
     int tmp=0;
-    pthread_mutex_lock(&mut); 
+    if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
     while(TestBit(places,tmp)){tmp++;}
     place=tmp;
     SetBit(places, place);
-    pthread_mutex_unlock(&mut); 
+    if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
 
     // sending message with place to private fifo
     char sendMessage[BUFSIZE];  /**< string with message to send */
     
     // checking if server is closed
-    pthread_mutex_lock(&mut2); 
+  if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
     if(closed.x){
-        pthread_mutex_unlock(&mut2); 
+        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
         place=-1;
-        printRegister(time(NULL), threadi, getpid(), pthread_self(), -1, -1, TLATE);
+        printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, -1, TLATE);
     }
     else{
-        pthread_mutex_unlock(&mut2); 
+        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
         printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
-    sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place);
+    if(sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place)<0){perror("Server-sprintf");}
 
     // write answer to private fifo
 
@@ -93,17 +93,17 @@ void * thread_func(void *arg){
     }
 
     if(closed.x){ //nao espera o tempo de uso
-        close(fd_priv);
+        if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
         pthread_exit(NULL);
     }
 
     // wait using time
-    usleep(dur*1000); 
+    if(usleep(dur*1000) == -1){perror("Server-usleep");}
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TIMUP);
     
     // cleanup
     ClearBit(places, place);
-    close(fd_priv);
+    if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
     pthread_exit(NULL);
 }
 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
     strcat(fifopath,fifoname);
 
     //create public fifo
-    if(mkfifo(fifopath,0660)<0){perror("Error creating public FIFO"); exit(1);}
+    if(mkfifo(fifopath,0660)==-1){perror("Error creating public FIFO"); exit(1);}
     
     //start counting time
     startTime();
@@ -142,34 +142,31 @@ int main(int argc, char* argv[]) {
     // while loop to check running time
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
-        if(read(fd_pub,&clientRequest,BUFSIZE)<=0){ 
-            continue;
-        }
+        if(read(fd_pub,&clientRequest,BUFSIZE)<=0){ continue;}
         // create thread with contents of public fifo
-        pthread_create(&tid, NULL, thread_func, &clientRequest);
-        pthread_detach(tid);
+        if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
+        if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
     }
 
-    pthread_mutex_lock(&mut2); 
+    // closing sequence
+    if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
     closed.x = 1;
-    pthread_mutex_unlock(&mut2); 
+    if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
     float starttime;
     int readreturn;
 
+    // notifies client threads that server is closed
     starttime = elapsedTime();
     do{
         readreturn = read(fd_pub, &clientRequest, BUFSIZE);
     } while (readreturn == 0 && elapsedTime() - starttime < MSATTEMPT);
-    
     if (readreturn > 0){
-        pthread_create(&tid, NULL, thread_func, &clientRequest);
-        pthread_detach(tid);
+        if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
+        if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
     }
     
     // cleanup
-    close(fd_pub);
-    if(unlink(fifopath)<0){
-        perror("Error destroying public fifo:");
-    }
+    if(close(fd_pub)==-1){perror("Server-closePublicFifo");}
+    if(unlink(fifopath)==-1){perror("Error destroying public fifo:");}
     pthread_exit((void*)0);
 }
