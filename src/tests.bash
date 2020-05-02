@@ -1,7 +1,5 @@
 #!/bin/bash
-
 # Adapted from André Daniel Gomes's Test script
-
 # usage|help|info: ./test -q <server timeout> -u <client timeout> -f <server fifo>
 
 RED='\033[1;31m'

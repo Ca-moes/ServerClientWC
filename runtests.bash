@@ -1,8 +1,6 @@
 #!/bin/bash
 
 cd src
-make
-
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 make -s
