@@ -22,19 +22,20 @@
 #define MSATTEMPT 500 /**< nº of milisec to waste attempting to open public fifo*/
 
 //global variables
-int i;  /**< número sequencial do pedido */
-bit serverOpen;
+int i;           /**< número sequencial do pedido */
+bit serverOpen;  /**< 1 if server is open | 0 otherwise*/
 
-pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
-pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a serverOpen*/
+pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
+
 /**
  * Thread Function that creates requests
  */
 void * thread_func(void *arg){
   // updating i with mutex's
-  pthread_mutex_lock(&mut2); 
+  if(pthread_mutex_lock(&mut2)!=0){perror("Client-MutexLock");}
   i++;
-  pthread_mutex_unlock(&mut2);
+  if(pthread_mutex_unlock(&mut2)!=0){perror("Client-MutexUnLock");}
 
   int fd_pub; /**< file descriptor of public fifo */
   char request[BUFSIZE]; /**< Request string to send to public fifo*/
@@ -52,24 +53,24 @@ void * thread_func(void *arg){
   }
 
   // Making of message to send, writing of message and closing of fifo
-  sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime);
+  if(sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime)<0){perror("Client-sprintf");}
   
   if (write(fd_pub, &request, BUFSIZE)<0){
       perror("Error writing request: ");
-      close(fd_pub); 
+      if(close(fd_pub)==-1){perror("Client-closePublicFifo");} 
       pthread_exit(NULL);
   }
 
   printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, IWANT);
-  close(fd_pub);
+  if(close(fd_pub)==-1){perror("Client-closePublicFifo");}
   
   // Making of pathname of private fifo 
   char privateFifo[BUFSIZE]="tmp/";
   char temp[BUFSIZE];
-  sprintf(temp,"%d",(int)getpid());
+  if(sprintf(temp,"%d",(int)getpid())<0){perror("Client-sprintf");}
   strcat(privateFifo,temp);
   strcat(privateFifo,".");
-  sprintf(temp,"%ld",(long int)pthread_self());
+  if(sprintf(temp,"%ld",(long int)pthread_self())<0){perror("Client-sprintf");}
   strcat(privateFifo,temp);
 
   //Create private fifo to read message from server
@@ -83,8 +84,8 @@ void * thread_func(void *arg){
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
   
   if (fd_priv < 0) {
-    fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo");
-    close(fd_priv);
+    if(fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo")<0){perror("Client-fprintf");}
+    if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
     pthread_exit(NULL);
   }
 
@@ -99,23 +100,21 @@ void * thread_func(void *arg){
   // If there's a response, parse the response to different variables
   int threadi, pid, dur, place;
   long int tid;
-  sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place);
+  if(sscanf(receivedMessage,"[ %d, %d, %ld, %d, %d ]",&threadi, &pid, &tid, &dur, &place)==EOF){perror("Client-sscanf");}
 
   // check if there's a place available or the server is closed
   if (place >= 0)
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, IAMIN);
   else{
-    pthread_mutex_lock(&mut);
+    if(pthread_mutex_lock(&mut)!=0){perror("Client-MutexLock");}
     serverOpen.x = 0;
-    pthread_mutex_unlock(&mut);
+    if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, CLOSD);
   }
 
   // cleanup
-  close(fd_priv);
-  if (unlink(privateFifo)<0){
-    perror("Error destroying private fifo:");
-  }
+  if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
+  if (unlink(privateFifo)==-1){perror("Error destroying private fifo:");}
   pthread_exit(0);
 }
 
@@ -142,16 +141,16 @@ int main(int argc, char* argv[], char *envp[]) {
 
   //ciclo de geracao de pedidos
   while(elapsedTime() < (double) nsecs){
-    pthread_mutex_lock(&mut);
+    if(pthread_mutex_lock(&mut)!=0){perror("Client-MutexLock");}
     if (serverOpen.x == 0) {
-      pthread_mutex_unlock(&mut);
+      if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
       break;
     }
-    pthread_mutex_unlock(&mut);
-    pthread_create(&tid,NULL, thread_func, (void *)fifopath);
-    pthread_join(tid,NULL);
+    if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
+    if(pthread_create(&tid,NULL, thread_func, (void *)fifopath)!=0){perror("Client-pthread_Create");}
+    if(pthread_join(tid,NULL)!= 0){perror("Client-pthread_join");}
   
-    usleep(INTMS*1000);
+    if(usleep(INTMS*1000) == -1){perror("Client-usleep");}
   }
   pthread_exit(0);
 }
