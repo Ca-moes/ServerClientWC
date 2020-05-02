@@ -1,0 +1,81 @@
+Setting server timeout to 1sec
+Setting client timeout to 1sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 33
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 33
+Setting server timeout to 2sec
+Setting client timeout to 3sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 67
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 1
+[1;32m[PASSED] [0mENTER - accepted requests: 66
+Setting server timeout to 5sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 165
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 165
+Setting server timeout to 2sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 67
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 1
+[1;32m[PASSED] [0mENTER - accepted requests: 66
+Setting server timeout to 10sec
+Setting client timeout to 10sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 330
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 330
+Setting server timeout to 10sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 165
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 165
+Setting server timeout to 15sec
+Setting client timeout to 10sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 329
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 329
+Setting server timeout to 30sec
+Setting client timeout to 35sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 990
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 1
+[1;32m[PASSED] [0mENTER - accepted requests: 989
+Setting server timeout to 70sec
+Setting client timeout to 80sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+Requests sent: 2305
+Failed requests: 0
+Gave up requests: 0
+[1;32m[PASSED] [0m2LATE - too late requests: 1
+[1;32m[PASSED] [0mENTER - accepted requests: 2304
