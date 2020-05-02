@@ -33,6 +33,11 @@ Para guardar os lugares ocupados é apenas necessário saber a posição do luga
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 ```
+Também com o objetivo de poupar espaço de memória está declarado em _registers.h_:
+```c 
+typedef struct bit {unsigned x:1;} bit; /**< bit Data Type */
+```
+esta struct que guarda valores booleanos (1 ou 0 neste caso) em um bit.
 
 ## Erros
 No estado atual do programa não nos acontecem erros. Para testar isto usamos um bash de testes fornecido por um estudante do nosso ano (Gonçalo Teixeira - up201806562) que foi adaptado de um bash de testes criado por nós numa fase inicial do projeto:
