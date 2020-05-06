@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd src
+cd src2
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 make -s

@@ -3,7 +3,7 @@ echo "╔═══════════════════════�
 echo "║   CHANGE FLAGS IN BASH   ║"
 echo "╚══════════════════════════╝"
 
-cd src/tmp
+cd src2/tmp
 # rm *.* &
 cd ..
 
@@ -11,9 +11,9 @@ cd ..
 # $? = 2 otherwise
 make -s
 if [ $? -eq 0 ] ; then
-  ./Q1 -t 5 fifoname &    # Un <-t nsecs> fifoname
+  ./Q2 -t 5 fifoname &    # Un <-t nsecs> fifoname
   P1=$!
-  ./U1 -t 10 fifoname &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+  ./U2 -t 10 fifoname &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
   wait $P1 $P2
   echo "END OF SERVER/CLIENT"
