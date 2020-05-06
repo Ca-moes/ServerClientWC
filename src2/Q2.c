@@ -47,7 +47,7 @@ void * thread_func(void *arg){
     strcat(privateFifo,".");
     if(sprintf(temp,"%ld",tid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
-
+        
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
     float startt = elapsedTime();
