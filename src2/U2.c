@@ -49,6 +49,7 @@ void * thread_func(void *arg){
   } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
   if (fd_pub < 0) {
     //fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
+    
     printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1,  CLOSD);
     if(pthread_mutex_lock(&mut)!=0){perror("Client-MutexLock");}
     serverOpen.x = 0;
