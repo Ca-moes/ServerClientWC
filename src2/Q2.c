@@ -107,6 +107,51 @@ void * thread_func(void *arg){
     pthread_exit(NULL);
 }
 
+void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char fifoname[]){
+  /* 1 - ler valor de -t
+   * 2 - ler valor de -l
+   * 3 - ler valor de -n */
+  int flag = 0;
+  for (int i = 1; i < argc; i++)
+  {
+    if (flag == 1)
+    {
+      nsecs=atoi(argv[i])*1000;
+      flag = 0;
+      continue;
+    }
+    else if (flag == 2)
+    {
+      *nplaces = atoi(argv[i]);
+      flag = 0;
+      continue;
+    }
+    else if (flag == 3)
+    {
+      *nthreads = atoi(argv[i]);
+      flag = 0;
+      continue;
+    }
+    else if (strcmp(argv[i], "-t") == 0)
+    {
+      flag = 1;
+      continue;
+    }
+    else if (strcmp(argv[i], "-l") == 0)
+    {
+      flag = 2;
+      continue;
+    }
+    else if (strcmp(argv[i], "-n") == 0)
+    {
+      flag = 3;
+      continue;
+    }
+    else
+      strcpy(fifoname,argv[i]);
+  }
+}
+
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];  /**< public fifo file name */
     char fifopath[BUFSIZE]="/tmp/";  /**< public fifo path */
@@ -114,19 +159,22 @@ int main(int argc, char* argv[]) {
     pthread_t tid;  /**< array to store thread id's */
     closed.x=0;  /**< 1-server closed | 0-server open */
 
+    int nplaces=0;
+    int nthreads=0;
+
     // initialize available places at 0
     for (int i = 0; i < 4; i++)
       places[i] = 0;
     
     // check arguments
-    if (argc!=4) {
+    if (argc!=4 && argc!=6 && argc!=8){
         printf("Usage: U1 <-t secs> fifoname\n");
         exit(1);
     }
 
     //read arguments
-    strcpy(fifoname,argv[3]);
-    nsecs=atoi(argv[2])*1000;
+    argumentsReader(argc, argv, &nplaces, &nthreads, fifoname);
+    //printf("argc:%d\nargv:smth\nnsecs:%f\nnplaces:%d\nnthreads:%d\nfifoname:%s\n", argc, nsecs, nplaces, nthreads, fifoname);
     strcat(fifopath,fifoname);
 
     //create public fifo
@@ -167,3 +215,4 @@ int main(int argc, char* argv[]) {
     if(close(fd_pub)==-1){perror("Server-closePublicFifo");}
     pthread_exit((void*)0);
 }
+
