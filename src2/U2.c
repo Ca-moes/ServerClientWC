@@ -98,7 +98,6 @@ void * thread_func(void *arg){
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
-  printf("|i: %d - tmpresult : %d\n", i, tmpresult);
 
   // Attempts to read from private fifo until there's a response
   int try = 0;
@@ -106,11 +105,9 @@ void * thread_func(void *arg){
     if (try != 0)
       usleep(100*1000);    
     tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
-    printf("||i: %d - tmpresult : %d\n", i, tmpresult);
     try++;
   }
   if(tmpresult<=0) {
-    printf("|||i: %d - tmpresult : %d\n", i, tmpresult);
     printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);
     if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
     if (unlink(privateFifo)==-1){perror("Error destroying private fifo:");}
