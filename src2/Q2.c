@@ -20,17 +20,27 @@
 #define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
 #define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
+double nsecs;  /**< numbers of seconds the program will be running */
+int nplaces; /**< size of array places */
+int nThreadsActive; /**< nº of active threads at the moment*/
+
 //com o intervalo entre pedidos 10 ms e valor maximo de uso 1000 ms, o valor maximo de lugares em uso
 //ao mesmo tempo é 100. 100/32 =3.125 faz com que seja preciso tamanho 4
-int places[4];  /**< array of bits to store used places */
+int *places;  /**< array of bits to store used places */
 bit closed; /**< bit to store if Server is open or closed */
+
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access places[] */
 pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**< mutex to enable closed bit */
+pthread_mutex_t mut3=PTHREAD_MUTEX_INITIALIZER; /**< mutex to access nThreadsActive */
 
-double nsecs;  /**< numbers of seconds the program will be running */
+
 
 void * thread_func(void *arg){
+    if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
+    nThreadsActive++;
+    if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}
+
     char * request = (char *) arg; /**< Request string received from public fifo*/
     int threadi, pid, dur, place;  /**< Component of request*/
     long tid;  /**< thread id of client */
@@ -40,7 +50,7 @@ void * thread_func(void *arg){
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, -1, RECVD);
 
     // make private fifo pathname
-    char privateFifo[BUFSIZE]="/tmp/";
+    char privateFifo[BUFSIZE]="tmp/";
     char temp[BUFSIZE];
     if(sprintf(temp,"%d",pid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
@@ -104,6 +114,9 @@ void * thread_func(void *arg){
     // cleanup
     ClearBit(places, place);
     if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
+    if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
+    nThreadsActive--;
+    if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}
     pthread_exit(NULL);
 }
 
@@ -154,18 +167,13 @@ void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char f
 
 int main(int argc, char* argv[]) {
     char fifoname[BUFSIZE];  /**< public fifo file name */
-    char fifopath[BUFSIZE]="/tmp/";  /**< public fifo path */
+    char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
     char clientRequest[BUFSIZE];  /**< string read from public fifo */
     pthread_t tid;  /**< array to store thread id's */
     closed.x=0;  /**< 1-server closed | 0-server open */
-
-    int nplaces=0;
-    int nthreads=0;
-
-    // initialize available places at 0
-    for (int i = 0; i < 4; i++)
-      places[i] = 0;
-    
+    nplaces = 0;
+    nThreadsActive = 0;
+    int nthreads=INT_MAX;
     // check arguments
     if (argc!=4 && argc!=6 && argc!=8){
         printf("Usage: U1 <-t secs> fifoname\n");
@@ -176,6 +184,12 @@ int main(int argc, char* argv[]) {
     argumentsReader(argc, argv, &nplaces, &nthreads, fifoname);
     //printf("argc:%d\nargv:smth\nnsecs:%f\nnplaces:%d\nnthreads:%d\nfifoname:%s\n", argc, nsecs, nplaces, nthreads, fifoname);
     strcat(fifopath,fifoname);
+    places = (int*) malloc(nplaces * sizeof(int));
+    int* places_copy = places;
+
+    // initialize available places at 0
+    for (int i = 0; i < 4; i++)
+      places[i] = 0;
 
     //create public fifo
     if(mkfifo(fifopath,0660)==-1){perror("Error creating public FIFO"); exit(1);}
@@ -192,8 +206,16 @@ int main(int argc, char* argv[]) {
         // while loop to check public fifo
         if(read(fd_pub,&clientRequest,BUFSIZE)<=0){ continue;}
         // create thread with contents of public fifo
-        if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
-        if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
+        if (nThreadsActive < nthreads)
+        {
+          if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
+          if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
+        }
+        else
+        {
+          // o que é suposto fazer aqui?
+        }
+        
     }
     // closing sequence
     if(unlink(fifopath)==-1){perror("Error destroying public fifo:");}
@@ -213,6 +235,7 @@ int main(int argc, char* argv[]) {
     
     // cleanup
     if(close(fd_pub)==-1){perror("Server-closePublicFifo");}
+    free(places_copy);
     pthread_exit((void*)0);
 }
 

@@ -50,7 +50,6 @@ void * thread_func(void *arg){
     attempt++;
   } while (fd_pub==-1 && attempt < 5);
   if (fd_pub == -1) {
-    //fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
     if(pthread_mutex_lock(&mut2)!=0){perror("Client-MutexLock");}
     printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1,  CLOSD);
     if(pthread_mutex_unlock(&mut2)!=0){perror("Client-MutexUnLock");}
@@ -73,7 +72,7 @@ void * thread_func(void *arg){
   if(close(fd_pub)==-1){perror("Client-closePublicFifo");}
   
   // Making of pathname of private fifo 
-  char privateFifo[BUFSIZE]="/tmp/";
+  char privateFifo[BUFSIZE]="tmp/";
   char temp[BUFSIZE];
   if(sprintf(temp,"%d",(int)getpid())<0){perror("Client-sprintf");}
   strcat(privateFifo,temp);
@@ -88,14 +87,19 @@ void * thread_func(void *arg){
   int fd_priv;
   startt = elapsedTime();
   do{
-    fd_priv = open(privateFifo, O_RDONLY);
+    printf("|i: %d  --  attempting to open private fifo\n", i);
+    fflush(stdout);
+    fd_priv = open(privateFifo, O_RDONLY, O_NONBLOCK);
+    printf("fdpriv: %d\n", fd_priv);
+    fflush(stdout);
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
-  
   if (fd_priv < 0) {
+    printf("|||i: %d  --  after attempting to open private fifo\n", i);
     if(fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo")<0){perror("Client-fprintf");}
     if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
     pthread_exit(NULL);
   }
+  printf("||||i: %d  --  able to open private fifo\n", i);
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
@@ -128,7 +132,7 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[], char *envp[]) {
   char fifoname[BUFSIZE];   /**< public fifo file name */
-  char fifopath[BUFSIZE]="/tmp/";  /**< public fifo path */
+  char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
   double nsecs;  /**< numbers of seconds the program will be running */
   pthread_t tid;  /**< array to store thread id's */
   serverOpen.x = 1;

@@ -4,14 +4,14 @@ echo "║   CHANGE FLAGS IN BASH   ║"
 echo "╚══════════════════════════╝"
 
 cd src2/tmp
-# rm *.* &
+rm *.* &
 cd ..
 
 # $? = 0 se compilou bem
 # $? = 2 otherwise
 make -s
 if [ $? -eq 0 ] ; then
-  ./Q2 -t 5 -l 100 -n 400 fifoname &    # Un <-t nsecs> fifoname
+  ./Q2 -t 5 -l 4 -n 2 fifoname &    # Un <-t nsecs> fifoname
   P1=$!
   ./U2 -t 10 fifoname &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
