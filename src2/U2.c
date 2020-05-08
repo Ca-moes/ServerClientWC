@@ -87,27 +87,35 @@ void * thread_func(void *arg){
   int fd_priv;
   startt = elapsedTime();
   do{
-    printf("|i: %d  --  attempting to open private fifo\n", i);
-    fflush(stdout);
-    fd_priv = open(privateFifo, O_RDONLY, O_NONBLOCK);
-    printf("fdpriv: %d\n", fd_priv);
-    fflush(stdout);
+    fd_priv = open(privateFifo, O_RDONLY | O_NONBLOCK);
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
   if (fd_priv < 0) {
-    printf("|||i: %d  --  after attempting to open private fifo\n", i);
     if(fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo")<0){perror("Client-fprintf");}
     if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
     pthread_exit(NULL);
   }
-  printf("||||i: %d  --  able to open private fifo\n", i);
 
   // Attempting to read the response
   char receivedMessage[BUFSIZE];
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
+  printf("|i: %d - tmpresult : %d\n", i, tmpresult);
 
   // Attempts to read from private fifo until there's a response
-  while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
-  if(tmpresult<0) {printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);}
+  int try = 0;
+  while(tmpresult<=0 && try < 5){
+    if (try != 0)
+      usleep(100*1000);    
+    tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
+    printf("||i: %d - tmpresult : %d\n", i, tmpresult);
+    try++;
+  }
+  if(tmpresult<=0) {
+    printf("|||i: %d - tmpresult : %d\n", i, tmpresult);
+    printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);
+    if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
+    if (unlink(privateFifo)==-1){perror("Error destroying private fifo:");}
+    pthread_exit(0);
+  }
 
   // If there's a response, parse the response to different variables
   int threadi, pid, dur, place;
