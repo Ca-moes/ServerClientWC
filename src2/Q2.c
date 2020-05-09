@@ -75,9 +75,18 @@ void * thread_func(void *arg){
     // Finding available place
     int tmp=0;
     if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
-    while(TestBit(places,tmp)){tmp++;}
-    place=tmp;
-    SetBit(places, place);
+
+    while(tmp < nplaces){
+      if (TestBit(places,tmp) == 0){
+        place=tmp;
+        SetBit(places, place);
+        break;
+      }
+      tmp++;
+      if (tmp == nplaces)
+        tmp=0;      
+    }
+
     if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
 
     // sending message with place to private fifo
@@ -121,7 +130,7 @@ void * thread_func(void *arg){
     pthread_exit(NULL);
 }
 
-void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char fifoname[]){
+void argumentsReader(int argc, char* argv[], int *nthreads, char fifoname[]){
   /* 1 - ler valor de -t
    * 2 - ler valor de -l
    * 3 - ler valor de -n */
@@ -136,7 +145,7 @@ void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char f
     }
     else if (flag == 2)
     {
-      *nplaces = atoi(argv[i]);
+      nplaces = atoi(argv[i]);
       flag = 0;
       continue;
     }
@@ -172,7 +181,6 @@ int main(int argc, char* argv[]) {
     char clientRequest[BUFSIZE];  /**< string read from public fifo */
     pthread_t tid;  /**< array to store thread id's */
     closed.x=0;  /**< 1-server closed | 0-server open */
-    nplaces = 0;
     nThreadsActive = 0;
     int nthreads=INT_MAX;
     // check arguments
@@ -182,8 +190,7 @@ int main(int argc, char* argv[]) {
     }
 
     //read arguments
-    argumentsReader(argc, argv, &nplaces, &nthreads, fifoname);
-    //printf("argc:%d\nargv:smth\nnsecs:%f\nnplaces:%d\nnthreads:%d\nfifoname:%s\n", argc, nsecs, nplaces, nthreads, fifoname);
+    argumentsReader(argc, argv, &nthreads, fifoname);
     strcat(fifopath,fifoname);
     int sizearr = (int)ceil(nplaces/32.0);
     places = (int*) malloc(sizearr * sizeof(int));
