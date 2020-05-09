@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -184,11 +185,12 @@ int main(int argc, char* argv[]) {
     argumentsReader(argc, argv, &nplaces, &nthreads, fifoname);
     //printf("argc:%d\nargv:smth\nnsecs:%f\nnplaces:%d\nnthreads:%d\nfifoname:%s\n", argc, nsecs, nplaces, nthreads, fifoname);
     strcat(fifopath,fifoname);
-    places = (int*) malloc(nplaces * sizeof(int));
+    int sizearr = (int)ceil(nplaces/32.0);
+    places = (int*) malloc(sizearr * sizeof(int));
     int* places_copy = places;
 
     // initialize available places at 0
-    for (int i = 0; i < nplaces; i++)
+    for (int i = 0; i < sizearr; i++)
       places[i] = 0;
 
     //create public fifo
