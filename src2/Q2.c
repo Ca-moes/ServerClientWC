@@ -58,7 +58,7 @@ void * thread_func(void *arg){
     strcat(privateFifo,".");
     if(sprintf(temp,"%ld",tid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
-        
+      
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
     float startt = elapsedTime();
@@ -72,49 +72,42 @@ void * thread_func(void *arg){
         pthread_exit((void *)1);
     }
     
-    // Finding available place
-    int tmp=0;
-    if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
-
-    while(tmp < nplaces){
-      if (TestBit(places,tmp) == 0){
-        place=tmp;
-        SetBit(places, place);
-        break;
-      }
-      tmp++;
-      if (tmp == nplaces)
-        tmp=0;      
-    }
-
-    if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
-
-    // sending message with place to private fifo
-    char sendMessage[BUFSIZE];  /**< string with message to send */
-    
     // checking if server is closed
-  if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
+    if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
     if(closed.x){
         if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
         place=-1;
         dur = -1;
         printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TLATE);
     }
-    else{
-        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
-        printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
+    else
+    {
+      if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
+      // Finding available place
+      int tmp=0;
+      if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
+      while(tmp < nplaces){
+        if (TestBit(places,tmp) == 0){
+          place=tmp;
+          SetBit(places, place);
+          break;
+        }
+        tmp++;
+        if (tmp == nplaces)
+          tmp=0;      
+      }
+      if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
+      printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
+    
+    // sending message with place to private fifo
+    char sendMessage[BUFSIZE];  /**< string with message to send */
     if(sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place)<0){perror("Server-sprintf");}
 
     // write answer to private fifo
     if(write(fd_priv,&sendMessage,BUFSIZE) == -1){
       printRegister(time(NULL), threadi, pid, pthread_self(), dur, place, GAVUP);
       pthread_exit((void *)1);
-    }
-
-    if(closed.x){ //nao espera o tempo de uso
-        if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
-        pthread_exit(NULL);
     }
 
     // wait using time
