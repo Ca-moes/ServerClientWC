@@ -103,7 +103,7 @@ void * thread_func(void *arg){
   int try = 0;
   while(tmpresult<=0 && try < 5){
     if (try != 0)
-      usleep(100*1000);    
+      usleep((UPPERB/5.0)*1000);    
     tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
     try++;
   }
