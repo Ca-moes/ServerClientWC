@@ -33,8 +33,9 @@ pthread_mutex_t mut2=PTHREAD_MUTEX_INITIALIZER; /**<  mutex para aceder a i*/
  */
 void * thread_func(void *arg){
   // updating i with mutex's
+  int threadn;/**< thread number */
   if(pthread_mutex_lock(&mut2)!=0){perror("Client-MutexLock");}
-  i++;
+  threadn = i++;
   if(pthread_mutex_unlock(&mut2)!=0){perror("Client-MutexUnLock");}
 
   int fd_pub; /**< file descriptor of public fifo */
@@ -50,10 +51,8 @@ void * thread_func(void *arg){
     attempt++;
   } while (fd_pub==-1 && attempt < 5);
   if (fd_pub == -1) {
-    //fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
-    if(pthread_mutex_lock(&mut2)!=0){perror("Client-MutexLock");}
-    printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1,  CLOSD);
-    if(pthread_mutex_unlock(&mut2)!=0){perror("Client-MutexUnLock");}
+    printRegister(time(NULL), threadn, getpid(), pthread_self(), useTime, -1,  CLOSD);
+
     if(pthread_mutex_lock(&mut)!=0){perror("Client-MutexLock");}
     serverOpen.x = 0;
     if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
@@ -61,7 +60,7 @@ void * thread_func(void *arg){
   }
 
   // Making of message to send, writing of message and closing of fifo
-  if(sprintf(request,"[ %d, %d, %lu, %d, -1 ]", i, getpid(), pthread_self(), useTime)<0){perror("Client-sprintf");}
+  if(sprintf(request,"[ %d, %d, %lu, %d, -1 ]", threadn, getpid(), pthread_self(), useTime)<0){perror("Client-sprintf");}
   
   if (write(fd_pub, &request, BUFSIZE)<0){
       perror("Error writing request: ");
@@ -69,11 +68,11 @@ void * thread_func(void *arg){
       pthread_exit(NULL);
   }
 
-  printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, IWANT);
+  printRegister(time(NULL), threadn, getpid(), pthread_self(), useTime, -1, IWANT);
   if(close(fd_pub)==-1){perror("Client-closePublicFifo");}
   
   // Making of pathname of private fifo 
-  char privateFifo[BUFSIZE]="/tmp/";
+  char privateFifo[BUFSIZE]="tmp/";
   char temp[BUFSIZE];
   if(sprintf(temp,"%d",(int)getpid())<0){perror("Client-sprintf");}
   strcat(privateFifo,temp);
@@ -88,11 +87,10 @@ void * thread_func(void *arg){
   int fd_priv;
   startt = elapsedTime();
   do{
-    fd_priv = open(privateFifo, O_RDONLY);
+    fd_priv = open(privateFifo, O_RDONLY | O_NONBLOCK);
   } while (fd_priv==-1 && elapsedTime() - startt < MSATTEMPT);
-  
   if (fd_priv < 0) {
-    if(fprintf(stderr, "%d.%s\n", i, "Client - Error Opening Private Fifo")<0){perror("Client-fprintf");}
+    if(fprintf(stderr, "%d.%s\n", threadn, "Client - Error Opening Private Fifo")<0){perror("Client-fprintf");}
     if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
     pthread_exit(NULL);
   }
@@ -102,8 +100,20 @@ void * thread_func(void *arg){
   int tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
 
   // Attempts to read from private fifo until there's a response
-  while(tmpresult==0){tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);}
-  if(tmpresult<0) {printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1, FAILD);}
+  int try = 0;
+  while(tmpresult<=0 && try < 5){
+    if (try != 0)
+      usleep(100*1000);    
+    tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
+    try++;
+  }
+  if(tmpresult<=0) {
+    printRegister(time(NULL), threadn, getpid(), pthread_self(), useTime, -1, FAILD);
+
+    if(close(fd_priv)==-1){perror("Client-closePrivateFifo");}
+    if (unlink(privateFifo)==-1){perror("Error destroying private fifo:");}
+    pthread_exit(0);
+  }
 
   // If there's a response, parse the response to different variables
   int threadi, pid, dur, place;
@@ -128,7 +138,7 @@ void * thread_func(void *arg){
 
 int main(int argc, char* argv[], char *envp[]) {
   char fifoname[BUFSIZE];   /**< public fifo file name */
-  char fifopath[BUFSIZE]="/tmp/";  /**< public fifo path */
+  char fifopath[BUFSIZE]="tmp/";  /**< public fifo path */
   double nsecs;  /**< numbers of seconds the program will be running */
   pthread_t tid;  /**< array to store thread id's */
   serverOpen.x = 1;
