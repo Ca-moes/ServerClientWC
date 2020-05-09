@@ -110,6 +110,11 @@ void * thread_func(void *arg){
       pthread_exit((void *)1);
     }
 
+    if(closed.x){ //nao espera o tempo de uso	
+        if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}	
+        pthread_exit(NULL);	
+    }
+
     // wait using time
     if(usleep(dur*1000) == -1){perror("Server-usleep");}
     printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TIMUP);

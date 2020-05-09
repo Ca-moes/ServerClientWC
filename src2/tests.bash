@@ -9,13 +9,17 @@ NC='\033[0m' # No Color
 # default values
 serverTime=10
 clientTime=15
+nPlaces=50
+nThreads=50
 fifoname='fifo.server'
 
-while getopts ":q:u:f:" opt; do
+while getopts ":q:u:f:l:n:" opt; do
   case $opt in
     q) serverTime=$OPTARG;;
     u) clientTime=$OPTARG;;
     f) fifoname=$OPTARG;;
+    l) nPlaces=$OPTARG;;
+    n) nThreads=$OPTARG;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
@@ -32,24 +36,24 @@ echo "Setting server timeout to "$serverTime"sec"
 echo "Setting client timeout to "$clientTime"sec"
 echo "SERVER/CLIENT RUNNING ..."
 
-./Q1 -t $serverTime "$fifoname" > logs/q1.log 2> logs/q1.err &  # Un <-t nsecs> fifoname
+./Q2 -t $serverTime -l $nPlaces -n $nThreads "$fifoname" > logs/q2.log 2> logs/q2.err &  # Un <-t nsecs> fifoname
 P1=$!
-./U1 -t $clientTime "$fifoname" > logs/u1.log 2> logs/u1.err &   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+./U2 -t $clientTime "$fifoname" > logs/u2.log 2> logs/u2.err &   # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
 P2=$!
 wait $P1 $P2
 echo "END OF SERVER/CLIENT"
 
 cd logs || exit
 
-nREQST=`grep IWANT u1.log | wc -l`
-nFAILD=`grep FAILD u1.log | wc -l`
-nGAVUP=`grep GAVUP q1.log | wc -l`
+nREQST=`grep IWANT u2.log | wc -l`
+nFAILD=`grep FAILD u2.log | wc -l`
+nGAVUP=`grep GAVUP q2.log | wc -l`
 
-n2LATE=`grep 2LATE q1.log | wc -l`
-nCLOSD=`grep CLOSD u1.log | wc -l`
+n2LATE=`grep 2LATE q2.log | wc -l`
+nCLOSD=`grep CLOSD u2.log | wc -l`
 
-nIAMIN=`grep IAMIN u1.log | wc -l`
-nENTER=`grep ENTER q1.log | wc -l`
+nIAMIN=`grep IAMIN u2.log | wc -l`
+nENTER=`grep ENTER q2.log | wc -l`
 
 echo "Requests sent: $nREQST"
 echo "Failed requests: $nFAILD"
