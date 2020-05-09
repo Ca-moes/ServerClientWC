@@ -44,11 +44,19 @@ void * thread_func(void *arg){
 
   // opening Public fifo to be able to write
   float startt = elapsedTime();
+  int attempt = 0;
   do{     
-    fd_pub = open(fifopath,O_WRONLY);
-  } while (fd_pub==-1 && elapsedTime() - startt < MSATTEMPT);
-  if (fd_pub < 0) {
-    fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
+    fd_pub = open(fifopath,O_WRONLY, O_NONBLOCK);
+    attempt++;
+  } while (fd_pub==-1 && attempt < 5);
+  if (fd_pub == -1) {
+    //fprintf(stderr, "%d-%s\n", i, "Client - Error Opening Public Fifo");
+    if(pthread_mutex_lock(&mut2)!=0){perror("Client-MutexLock");}
+    printRegister(time(NULL), i, getpid(), pthread_self(), useTime, -1,  CLOSD);
+    if(pthread_mutex_unlock(&mut2)!=0){perror("Client-MutexUnLock");}
+    if(pthread_mutex_lock(&mut)!=0){perror("Client-MutexLock");}
+    serverOpen.x = 0;
+    if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
     pthread_exit(NULL);
   }
 

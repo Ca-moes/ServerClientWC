@@ -47,7 +47,7 @@ void * thread_func(void *arg){
     strcat(privateFifo,".");
     if(sprintf(temp,"%ld",tid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
-
+        
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
     float startt = elapsedTime();
@@ -147,26 +147,23 @@ int main(int argc, char* argv[]) {
         if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
         if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
     }
-
     // closing sequence
+    if(unlink(fifopath)==-1){perror("Error destroying public fifo:");}
     if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
     closed.x = 1;
     if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
-    float starttime;
-    int readreturn;
-
-    // notifies client threads that server is closed
-    starttime = elapsedTime();
-    do{
-        readreturn = read(fd_pub, &clientRequest, BUFSIZE);
-    } while (readreturn == 0 && elapsedTime() - starttime < MSATTEMPT);
-    if (readreturn > 0){
-        if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
-        if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
+    //float starttime;
+    int readreturn = read(fd_pub, &clientRequest, BUFSIZE);
+    while (readreturn != 0)
+    {
+      printf("Dentro de while\n");
+      if(readreturn <0 ){perror("Server-read error");}
+      if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
+      if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
+      readreturn = read(fd_pub, &clientRequest, BUFSIZE);
     }
     
     // cleanup
     if(close(fd_pub)==-1){perror("Server-closePublicFifo");}
-    if(unlink(fifopath)==-1){perror("Error destroying public fifo:");}
     pthread_exit((void*)0);
 }
