@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
     int* places_copy = places;
 
     // initialize available places at 0
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < nplaces; i++)
       places[i] = 0;
 
     //create public fifo
@@ -238,4 +238,3 @@ int main(int argc, char* argv[]) {
     free(places_copy);
     pthread_exit((void*)0);
 }
-
