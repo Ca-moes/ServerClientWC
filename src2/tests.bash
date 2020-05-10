@@ -87,7 +87,7 @@ fi
 
 if  [ $nFAILD -eq "$(echo "$nIWANT - ($nENTER + $n2LATE)" | bc)" ] ; then
   echo -e "${GREEN}[PASSED] ${NC}FAILD - number of faild's: $nFAILD"
-  valid2=1;
+  valid3=1;
 else
   echo -e "${RED}[FAILED] ${NC}FAILD"
 fi
@@ -96,7 +96,7 @@ cd ..
 # comment this line if you wish to keep the log files (debugging purposes)
 # rm -rf logs
 
-if [[ $valid1 -eq 1 && $valid2 -eq 1 ]] ; then
+if [[ $valid1 -eq 1 && $valid2 -eq 1 && $valid3 -eq 1 ]] ; then
   exit 0;
 else
   exit 1;
