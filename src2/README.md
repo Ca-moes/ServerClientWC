@@ -1,6 +1,7 @@
 # Pormenores de Implementação
 Igual à parte 1: ambos os programas U2 e Q2 são multithreaded e funcionam com o máximo de paralelismo possível, juntamente com a verificação para não ocorrerem situações de _deadlock_, "colisão" ou "esperas ativas" com auxilio de mutexes. Os pedidos de acesso ao Quarto de Banho têm uma duração aleatória com limites entre **UPPERB** e **LOWERB** em U2.c e o intervalo entre pedidos é de **INTMS** = 50 ms.
-Para a segunda parte o programa Q2 lê os novos argumentos
+
+Para a segunda parte o programa Q2 lê os novos argumentos -n e -l corretamente. Caso não seja especificado o número máximo de threads, este será **INT_MAX** e caso não seja especificado o número máximo de _places_, este será 32. Para chegar a este último valor reparamos que o **UPPERB** = 1000ms e o **INTMS** = 50ms o que faz com que, no pior caso possivel (todos os pedidos são de 1000ms) vai chegar a uma altura em que o número de lugares ocupados não aumenta mais porque ao ritmo a que os lugares ficam desocupados, ficam imediatamente ocupados outra vez. Com isto apenas 20 lugares (1000/50) podem estar ocupados em simultâneo. Como estamos a usar um array de _bits_ a partir de um array de _int's_ para guardar os lugares (explicação em baixo) e a fórmula `int sizearr = (int)ceil(nplaces/32.0);` para determinar o tamanho do array, podemos usar como valor default 32 lugares, o que dará um array de tamanho 1 (ou seja, uma variável _int_).
 
 ## Detalhes - U
 - Os argumentos da linha de comando estão a ser lidos e guardados corretamente
@@ -14,6 +15,25 @@ Para a segunda parte o programa Q2 lê os novos argumentos
   - Verifica se o servidor está fechado (para parar de criar novos pedidos) ou se têm um lugar disponivel, caso o servidor esteja fechado é mandado para o **STDOUT** a flag **CLOSD** e uma variável global **serverOpen** muda de valor para notificar o ciclo de criação de pedidos em _main()_ para parar.
   - Fecha o fifo privado, elimina-o e faz o _clean up_ final antes de sair da thread 
 - No fim do tempo de execução é feito um cleanup em _main()_
+
+### Diferenças entre U1 e U2
+
+Devido à ambiguidade do enunciado em relação a quando devem ser lançadas as flags 2LATE e CLOSD, às mudanças e correções de erros que tivemos que fazer em U2 após o feedback da primeira entrega e em geral, às alterações necessários ao programa U para funcionar corretamente com o novo programa Q2, tivemos de alterar o programa original U1, indo contra o objetivo inicial de ter o programa Q2 a funcionar com o programa U1.
+> 1 Note-se que, em rigor, não são precisos dois programas U: não há razão para o cliente U1 ter de ser diferente de U2!
+
+
+#### Diferenças
+1.  Estavamos a usar uma variavel global para manter _track_ dos _thread numbers_ que eram mandados para o **std_out** mas isto encorria em erro quando mais do que uma thread client tinha de escrever no mesmo instante no stdout porque ficavam com o mesmo valor. Para tratar disto criou-se uma variavel local da _thread number_ para guardar o seu número de thread global. 
+
+![](https://i.imgur.com/x7Txhgt.png)
+
+2. Na abertura do Fifo Pública era feita uma espera por parte do cliente e caso não tivesse resposta a thread fechava; Em U2 é feito _open()_ com a flag **O_NONBLOCK** com diversas tentativas e caso a thread não consiga abrir o fifo, significa que o servidor se encontra fechado. A thread cliente avisa o ciclo de criação de novas threads e fecha.
+
+![](https://i.imgur.com/5qKLXDg.png)
+
+3. A última mudança significativa é relativa à leitura do fifo privado. Em U1 eram feitas tentativas de leitura até dar erro e aí era mandado para o **std_out** a flag **FAILD**. Em U2 é feito um número fixo de tentativas na qual a thread gasta no total **UPPERB** ms em tentativas de leitura, relativo ao pior caso possivel em que uma thread servidor tem de esperar **UPPERB** ms para ter um lugar livre. Caso não haja resposta significa que houve um problema (poucos lugares disponiveis, sem thread para atender) e neste caso a thread cliente dá um _cleanup_ e fecha.
+
+![](https://i.imgur.com/jiqAB6t.png)
 
 ## Detalhes - Q
 - Os argumentos da linha de comando estão a ser lidos e guardados corretamente
