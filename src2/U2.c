@@ -48,7 +48,7 @@ void * thread_func(void *arg){
   int attempt = 0;
   do{     
     fd_pub = open(fifopath,O_WRONLY, O_NONBLOCK);
-    usleep(100*1000);
+    usleep(10*1000);
     attempt++;
   } while (fd_pub==-1 && attempt < 5);
   if (fd_pub == -1) {
