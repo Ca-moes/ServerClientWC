@@ -102,9 +102,9 @@ void * thread_func(void *arg){
 
   // Attempts to read from private fifo until there's a response
   int try = 0;
-  while(tmpresult<=0 && try < 5){
+  while(tmpresult<=0 && try < 50){
     if (try != 0)
-      usleep((UPPERB/5.0)*1000);    
+      usleep((UPPERB/50.0)*1000);    
     tmpresult = read(fd_priv,&receivedMessage,BUFSIZE);
     try++;
   }
@@ -166,6 +166,7 @@ int main(int argc, char* argv[], char *envp[]) {
       break;
     }
     if(pthread_mutex_unlock(&mut)!=0){perror("Client-MutexUnLock");}
+
     if(pthread_create(&tid,NULL, thread_func, (void *)fifopath)!=0){perror("Client-pthread_Create");}
     if(pthread_detach(tid)!= 0){perror("Client-pthread_join");}
   

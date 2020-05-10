@@ -41,6 +41,11 @@ void * thread_func(void *arg){
     if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
     nThreadsActive++;
     if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}
+    
+    bit WCclosed;
+    if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
+    WCclosed.x=closed.x;
+    if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
 
     char * request = (char *) arg; /**< Request string received from public fifo*/
     int threadi, pid, dur, place;  /**< Component of request*/
@@ -73,9 +78,8 @@ void * thread_func(void *arg){
     }
     
     // checking if server is closed
-    if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
-    if(closed.x){
-        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
+    
+    if(WCclosed.x){
         place=-1;
         dur = -1;
         printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TLATE);
@@ -110,8 +114,9 @@ void * thread_func(void *arg){
       pthread_exit((void *)1);
     }
 
-    if(closed.x){ //nao espera o tempo de uso	
+    if(WCclosed.x){ //nao espera o tempo de uso	
         if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}	
+        printf("closing thread %d\n",threadi);
         pthread_exit(NULL);	
     }
 
@@ -207,7 +212,7 @@ int main(int argc, char* argv[]) {
     // open public fifo
     int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
-    
+
     // while loop to check running time
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
@@ -217,10 +222,6 @@ int main(int argc, char* argv[]) {
         {
           if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
           if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
-        }
-        else
-        {
-          // o que é suposto fazer aqui?
         }
         
     }
