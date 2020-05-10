@@ -186,6 +186,7 @@ int main(int argc, char* argv[]) {
     closed.x=0;  /**< 1-server closed | 0-server open */
     nThreadsActive = 0;
     int nthreads=INT_MAX;
+    nplaces = 2048;
     // check arguments
     if (argc!=4 && argc!=6 && argc!=8){
         printf("Usage: U1 <-t secs> fifoname\n");

@@ -11,7 +11,7 @@ cd ..
 # $? = 2 otherwise
 make -s
 if [ $? -eq 0 ] ; then
-  ./Q2 -t 5 -l 5 -n 5 fifoname | tee Q2run.log &    # Un <-t nsecs> fifoname
+  ./Q2 -t 5 -n 5 fifoname | tee Q2run.log &    # Un <-t nsecs> fifoname
   P1=$!
   ./U2 -t 5 fifoname | tee U2run.log &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
