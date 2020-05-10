@@ -63,7 +63,7 @@ typedef struct bit {unsigned x:1;} bit; /**< bit Data Type */
 ```
 esta struct que guarda valores booleanos (1 ou 0 neste caso) em um bit.
 
-### Verificação ed lugares disponiveis
+### Verificação de lugares disponiveis
 
 Para a seleção do lugar que a thread servidor designará para um cliente é feita uma pesquise sequencial dos lugares até encontrar um lugar livre (bit a 0). Caso o ciclo percorra todos os lugares e não encontre um lugar livre (ou seja, todos os lugares estão ocupados) recomeça o ciclo a partir do indice = 0. Assim que um lugar fique livre este é imediatamente designado para a thread client que estava à espera. Após encontrar um lugar livre é dado _unlock()_ ao mutex que permite aceder ao array **places** e caso haja threads à espera para procurar um novo lugar, uma dessas dará lock ao mutex e entrará no ciclo de procura/espera. 
 ```c
@@ -197,6 +197,8 @@ São testadas 3 igualdades:
 1. O número de **ENTER** tem de ser igual ao número de **IAMIN** - Para certificar que as threads client estão a esperar pela sua resposta enquanto as threads servidor procuram um lugar e que as threads client estão a ter receber uma resposta das threads servidor.
 2. O número de **ENTER** tem de ser igual ao número de **TIMUP** - Para certificar que, independentemente de a casa de banho estar fechada ou não, as threads servidor esperam o tempo de uso para depois mandar a flag **TIMUP**.
 3. O número de **FAILD** tem de ser igual à diferença entre o número de **IWANT** e a soma do número de **ENTER** com **2LATE** - A thread cliente pode tomar 2 caminhos, que dependem se ela recebe resposta a partir do fifo privado ou não. De todos os pedidos **IWANT**, alguns resultarão em **IAMIN** e outros em **FAILD**. o número de **FAILD** será então o número de pedidos que não receberam a resposta **ENTER** nem **2LATE**.
+
+Deixamos de testar a igualdade entre **CLOSD** e **2LATE** após o feedback da primeira entrega. Agora raramente teremos **2LATE**'s que acontecem caso haja pedidos pendentes no fifo público que não foram processados no primeiro ciclo while do servidor. Os **CLOSD** aparecem quando a thread do cliente não consegue abrir o fifo público, isto devido à linha `if(unlink(fifopath)==-1){perror("Error destroying public fifo:");}` em Q2.c que, após o ciclo de geração de threads para atender os pedidos dentro do tempo de execução de Q, dá imediatemente unlink(), impossibilitando o programa cliente de escrever para o fifo público. Como não vai haver escrita, não haverá novas threads servidor criadas para mandar **2LATE**.
 
 Para testar as variações possiveis de uso foi usado o seguinte bash como bateria de testes:
 ```bash
