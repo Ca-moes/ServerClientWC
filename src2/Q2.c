@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -40,6 +41,11 @@ void * thread_func(void *arg){
     if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
     nThreadsActive++;
     if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}
+    
+    bit WCclosed;
+    if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
+    WCclosed.x=closed.x;
+    if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
 
     char * request = (char *) arg; /**< Request string received from public fifo*/
     int threadi, pid, dur, place;  /**< Component of request*/
@@ -57,7 +63,7 @@ void * thread_func(void *arg){
     strcat(privateFifo,".");
     if(sprintf(temp,"%ld",tid)<0){perror("Server-sprintf");}
     strcat(privateFifo,temp);
-        
+      
     // open private fifo
     int fd_priv; /**< private fifo file descriptor */
     float startt = elapsedTime();
@@ -71,29 +77,34 @@ void * thread_func(void *arg){
         pthread_exit((void *)1);
     }
     
-    // Finding available place
-    int tmp=0;
-    if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
-    while(TestBit(places,tmp)){tmp++;}
-    place=tmp;
-    SetBit(places, place);
-    if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
-
-    // sending message with place to private fifo
-    char sendMessage[BUFSIZE];  /**< string with message to send */
-    
     // checking if server is closed
-  if(pthread_mutex_lock(&mut2)!=0){perror("Server-MutexLock");}
-    if(closed.x){
-        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
+    if(WCclosed.x){
         place=-1;
         dur = -1;
         printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, TLATE);
     }
-    else{
-        if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
-        printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
+    else
+    {
+      if(pthread_mutex_unlock(&mut2)!=0){perror("Server-MutexUnLock");}
+      // Finding available place
+      int tmp=0;
+      if(pthread_mutex_lock(&mut)!=0){perror("Server-MutexLock");}
+      while(tmp < nplaces){
+        if (TestBit(places,tmp) == 0){
+          place=tmp;
+          SetBit(places, place);
+          break;
+        }
+        tmp++;
+        if (tmp == nplaces)
+          tmp=0;      
+      }
+      if(pthread_mutex_unlock(&mut)!=0){perror("Server-MutexUnLock");}
+      printRegister(time(NULL), threadi, getpid(), pthread_self(), dur, place, ENTER);
     }
+    
+    // sending message with place to private fifo
+    char sendMessage[BUFSIZE];  /**< string with message to send */
     if(sprintf(sendMessage,"[ %d, %d, %ld, %d, %d ]", threadi, getpid(), pthread_self(), dur, place)<0){perror("Server-sprintf");}
 
     // write answer to private fifo
@@ -102,9 +113,12 @@ void * thread_func(void *arg){
       pthread_exit((void *)1);
     }
 
-    if(closed.x){ //nao espera o tempo de uso
+    if(WCclosed.x){ //nao espera o tempo de uso	
         if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
-        pthread_exit(NULL);
+        if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
+        nThreadsActive--;
+        if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}	
+        pthread_exit(NULL);	
     }
 
     // wait using time
@@ -120,7 +134,7 @@ void * thread_func(void *arg){
     pthread_exit(NULL);
 }
 
-void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char fifoname[]){
+void argumentsReader(int argc, char* argv[], int *nthreads, char fifoname[]){
   /* 1 - ler valor de -t
    * 2 - ler valor de -l
    * 3 - ler valor de -n */
@@ -135,7 +149,7 @@ void argumentsReader(int argc, char* argv[], int *nplaces, int *nthreads, char f
     }
     else if (flag == 2)
     {
-      *nplaces = atoi(argv[i]);
+      nplaces = atoi(argv[i]);
       flag = 0;
       continue;
     }
@@ -171,9 +185,9 @@ int main(int argc, char* argv[]) {
     char clientRequest[BUFSIZE];  /**< string read from public fifo */
     pthread_t tid;  /**< array to store thread id's */
     closed.x=0;  /**< 1-server closed | 0-server open */
-    nplaces = 0;
     nThreadsActive = 0;
     int nthreads=INT_MAX;
+    nplaces = 32;
     // check arguments
     if (argc!=4 && argc!=6 && argc!=8){
         printf("Usage: U1 <-t secs> fifoname\n");
@@ -181,14 +195,14 @@ int main(int argc, char* argv[]) {
     }
 
     //read arguments
-    argumentsReader(argc, argv, &nplaces, &nthreads, fifoname);
-    //printf("argc:%d\nargv:smth\nnsecs:%f\nnplaces:%d\nnthreads:%d\nfifoname:%s\n", argc, nsecs, nplaces, nthreads, fifoname);
+    argumentsReader(argc, argv, &nthreads, fifoname);
     strcat(fifopath,fifoname);
-    places = (int*) malloc(nplaces * sizeof(int));
+    int sizearr = (int)ceil(nplaces/32.0);
+    places = (int*) malloc(sizearr * sizeof(int));
     int* places_copy = places;
 
     // initialize available places at 0
-    for (int i = 0; i < nplaces; i++)
+    for (int i = 0; i < sizearr; i++)
       places[i] = 0;
 
     //create public fifo
@@ -200,7 +214,7 @@ int main(int argc, char* argv[]) {
     // open public fifo
     int fd_pub = open(fifopath,O_RDONLY); // sem O_NONBLOCK aqui fica bloqueado à espera que cliente abra
     if (fd_pub==-1){perror("Error opening public FIFO: "); exit(1);}
-    
+
     // while loop to check running time
     while(elapsedTime() < (double) nsecs){        
         // while loop to check public fifo
@@ -210,10 +224,6 @@ int main(int argc, char* argv[]) {
         {
           if(pthread_create(&tid, NULL, thread_func, &clientRequest)!=0){perror("Server-pthread_Create");}
           if(pthread_detach(tid)!=0){perror("Server-pthread_detach");}
-        }
-        else
-        {
-          // o que é suposto fazer aqui?
         }
         
     }

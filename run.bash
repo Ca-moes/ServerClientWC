@@ -11,9 +11,9 @@ cd ..
 # $? = 2 otherwise
 make -s
 if [ $? -eq 0 ] ; then
-  ./Q2 -t 5 -l 4 -n 1 fifoname &    # Un <-t nsecs> fifoname
+  ./Q2 -t 5 -n 5 fifoname | tee Q2run.log &    # Un <-t nsecs> fifoname
   P1=$!
-  ./U2 -t 10 fifoname &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
+  ./U2 -t 5 fifoname | tee U2run.log &     # Qn <-t nsecs> [-l nplaces] [-n nthreads] fifoname
   P2=$!
   wait $P1 $P2
   echo "END OF SERVER/CLIENT"
@@ -21,6 +21,22 @@ if [ $? -eq 0 ] ; then
 else
   echo "MAKE ERROR";
 fi
+
+nIWANT=`grep IWANT U2run.log | wc -l`
+nRECVD=`grep RECVD Q2run.log | wc -l`
+
+nENTER=`grep ENTER Q2run.log | wc -l`
+nIAMIN=`grep IAMIN U2run.log | wc -l`
+
+nFAILD=`grep FAILD U2run.log | wc -l`
+nGAVUP=`grep GAVUP Q2run.log | wc -l`
+n2LATE=`grep 2LATE Q2run.log | wc -l`
+nCLOSD=`grep CLOSD U2run.log | wc -l`
+
+echo "IWANT : $nIWANT"
+echo "RECVD : $nRECVD"
+echo "ENTER : $nENTER"
+echo "IAMIN : $nIAMIN"
 
 # make clean
 # Flags Possiveis:
