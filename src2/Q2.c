@@ -114,8 +114,10 @@ void * thread_func(void *arg){
     }
 
     if(WCclosed.x){ //nao espera o tempo de uso	
-        if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}	
-        printf("closing thread %d\n",threadi);
+        if(close(fd_priv)==-1){perror("Server-closePrivateFifo");}
+        if(pthread_mutex_lock(&mut3)!=0){perror("Server-MutexLock");}
+        nThreadsActive--;
+        if(pthread_mutex_unlock(&mut3)!=0){perror("Server-MutexUnLock");}	
         pthread_exit(NULL);	
     }
 
