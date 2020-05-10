@@ -2,17 +2,17 @@ CC = gcc
 CFLAGS = -Wall -pthread
 DEPS = utils.h registers.h Q1.h
 OBJ = utils.o registers.o
-TARGETS = U2 Q2
+TARGETS = U1 Q1
 
-all: U2 Q2
+all: U1 Q1
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-U2: $(OBJ)
+U1: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $@.c $(OBJ) -lm
 
-Q2: $(OBJ)
+Q1: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $@.c $(OBJ) -lm
 
 clean:
