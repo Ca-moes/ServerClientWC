@@ -106,6 +106,7 @@ Nesta etapa, o programa Q2:
 A entrega do trabalho para avaliação tem duas datas limite:
 - 2.Maio.2020, inclusive, para a Etapa 1;
 - 16.Maio.2020, inclusive, para a Etapa 2.
+
 Em cada etapa, a entrega deve ser feita mediante um ficheiro compacto com:
 - código-fonte
 - makefile preparado para facilitar a geração dos executáveis
