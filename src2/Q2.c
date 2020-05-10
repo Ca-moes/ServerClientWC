@@ -78,7 +78,6 @@ void * thread_func(void *arg){
     }
     
     // checking if server is closed
-    
     if(WCclosed.x){
         place=-1;
         dur = -1;
