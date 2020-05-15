@@ -1,0 +1,162 @@
+Setting server timeout to 1sec
+Setting client timeout to 1sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 2
+ENTER: 2
+GAVUP: 0
+TIMUP: 2
+2LATE: 0
+--CLIENT--
+IWANT: 20
+IAMIN: 2
+CLOSD: 0
+FAILD: 18
+[1;32m[PASSED] [0mENTER - accepted requests: 2
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 2
+[1;32m[PASSED] [0mFAILD - number of faild's: 18
+Setting server timeout to 2sec
+Setting client timeout to 3sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 13
+ENTER: 13
+GAVUP: 0
+TIMUP: 13
+2LATE: 0
+--CLIENT--
+IWANT: 40
+IAMIN: 13
+CLOSD: 2
+FAILD: 27
+[1;32m[PASSED] [0mENTER - accepted requests: 13
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 13
+[1;32m[PASSED] [0mFAILD - number of faild's: 27
+Setting server timeout to 5sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 50
+ENTER: 50
+GAVUP: 0
+TIMUP: 50
+2LATE: 0
+--CLIENT--
+IWANT: 100
+IAMIN: 50
+CLOSD: 0
+FAILD: 50
+[1;32m[PASSED] [0mENTER - accepted requests: 50
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 50
+[1;32m[PASSED] [0mFAILD - number of faild's: 50
+Setting server timeout to 2sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 15
+ENTER: 15
+GAVUP: 0
+TIMUP: 15
+2LATE: 0
+--CLIENT--
+IWANT: 40
+IAMIN: 15
+CLOSD: 2
+FAILD: 25
+[1;32m[PASSED] [0mENTER - accepted requests: 15
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 15
+[1;32m[PASSED] [0mFAILD - number of faild's: 25
+Setting server timeout to 10sec
+Setting client timeout to 10sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 131
+ENTER: 131
+GAVUP: 0
+TIMUP: 131
+2LATE: 0
+--CLIENT--
+IWANT: 200
+IAMIN: 131
+CLOSD: 0
+FAILD: 69
+[1;32m[PASSED] [0mENTER - accepted requests: 131
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 131
+[1;32m[PASSED] [0mFAILD - number of faild's: 69
+Setting server timeout to 10sec
+Setting client timeout to 5sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 84
+ENTER: 84
+GAVUP: 0
+TIMUP: 84
+2LATE: 0
+--CLIENT--
+IWANT: 100
+IAMIN: 84
+CLOSD: 0
+FAILD: 16
+[1;32m[PASSED] [0mENTER - accepted requests: 84
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 84
+[1;32m[PASSED] [0mFAILD - number of faild's: 16
+Setting server timeout to 15sec
+Setting client timeout to 10sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 177
+ENTER: 177
+GAVUP: 0
+TIMUP: 177
+2LATE: 0
+--CLIENT--
+IWANT: 200
+IAMIN: 177
+CLOSD: 0
+FAILD: 23
+[1;32m[PASSED] [0mENTER - accepted requests: 177
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 177
+[1;32m[PASSED] [0mFAILD - number of faild's: 23
+Setting server timeout to 30sec
+Setting client timeout to 35sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 599
+ENTER: 599
+GAVUP: 0
+TIMUP: 599
+2LATE: 0
+--CLIENT--
+IWANT: 599
+IAMIN: 599
+CLOSD: 2
+FAILD: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 599
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 599
+[1;32m[PASSED] [0mFAILD - number of faild's: 0
+Setting server timeout to 70sec
+Setting client timeout to 80sec
+SERVER/CLIENT RUNNING ...
+END OF SERVER/CLIENT
+--SERVER--
+RECVD: 1397
+ENTER: 1397
+GAVUP: 0
+TIMUP: 1397
+2LATE: 0
+--CLIENT--
+IWANT: 1397
+IAMIN: 1397
+CLOSD: 2
+FAILD: 0
+[1;32m[PASSED] [0mENTER - accepted requests: 1397
+[1;32m[PASSED] [0mTIMEUP - number of timeup's: 1397
+[1;32m[PASSED] [0mFAILD - number of faild's: 0
