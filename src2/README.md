@@ -27,7 +27,7 @@ Devido à ambiguidade do enunciado em relação a quando devem ser lançadas as 
 
 ![](https://i.imgur.com/x7Txhgt.png)
 
-2. Na abertura do Fifo Pública era feita uma espera por parte do cliente e caso não tivesse resposta a thread fechava; Em U2 é feito _open()_ com a flag **O_NONBLOCK** com diversas tentativas e caso a thread não consiga abrir o fifo, significa que o servidor se encontra fechado. A thread cliente avisa o ciclo de criação de novas threads e fecha.
+2. Na abertura do Fifo Público era feita uma espera por parte do cliente e caso não tivesse resposta a thread fechava; Em U2 é feito _open()_ com a flag **O_NONBLOCK** com diversas tentativas e caso a thread não consiga abrir o fifo, significa que o servidor se encontra fechado. A thread cliente avisa o ciclo de criação de novas threads e fecha.
 
 ![](https://i.imgur.com/5qKLXDg.png)
 
@@ -194,7 +194,7 @@ fi
 ```
 
 São testadas 3 igualdades:
-1. O número de **ENTER** tem de ser igual ao número de **IAMIN** - Para certificar que as threads client estão a esperar pela sua resposta enquanto as threads servidor procuram um lugar e que as threads client estão a ter receber uma resposta das threads servidor.
+1. O número de **ENTER** tem de ser igual ao número de **IAMIN** - Para certificar que as threads client estão a esperar pela sua resposta enquanto as threads servidor procuram um lugar e que as threads client estão a receber uma resposta das threads servidor.
 2. O número de **ENTER** tem de ser igual ao número de **TIMUP** - Para certificar que, independentemente de a casa de banho estar fechada ou não, as threads servidor esperam o tempo de uso para depois mandar a flag **TIMUP**.
 3. O número de **FAILD** tem de ser igual à diferença entre o número de **IWANT** e a soma do número de **ENTER** com **2LATE** - A thread cliente pode tomar 2 caminhos, que dependem se ela recebe resposta a partir do fifo privado ou não. De todos os pedidos **IWANT**, alguns resultarão em **IAMIN** e outros em **FAILD**. o número de **FAILD** será então o número de pedidos que não receberam a resposta **ENTER** nem **2LATE**.
 
